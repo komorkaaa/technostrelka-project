@@ -10,7 +10,6 @@ class EmailImportRequest(BaseModel):
     mailbox: str = "INBOX"
     limit: int = Field(default=20, ge=1, le=200)
     use_sample: bool = False
-    sample_path: str = "app/email_parser/sample_emails.txt"
     consent_to_use_password: bool = False
 
 
