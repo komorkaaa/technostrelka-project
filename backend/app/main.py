@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.database import Base, engine
-from app.models import Subscription
+import app.models  # noqa: F401  Ensures all models are registered
 from app.routes.email import router as email_router
 from app.routes.subscriptions import router as subscriptions_router
 
