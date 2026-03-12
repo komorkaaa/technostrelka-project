@@ -12,6 +12,7 @@ from app.schemas import EmailImportRequest, ParsedSubscription
 
 
 router = APIRouter(prefix="/email", tags=["email"])
+SAMPLE_PATH = "app/email_parser/sample_emails.txt"
 
 
 def _load_sample_messages(sample_path: str) -> List[dict]:
@@ -42,7 +43,7 @@ def import_email(data: EmailImportRequest):
     subscriptions: List[ParsedSubscription] = []
 
     if data.use_sample:
-        for msg in _load_sample_messages(data.sample_path):
+        for msg in _load_sample_messages(SAMPLE_PATH):
             result = parse_email(msg["body"], sender=msg["sender"], subject=msg["subject"])
             if result:
                 subscriptions.append(ParsedSubscription(**result))
