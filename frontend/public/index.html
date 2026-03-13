@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang= ru>
+  <head>
+    <meta charset=UTF-8 />
+    <meta name=viewport content=width=device-width initial-scale=1.0 />
+    <title>SubMonitor</title>
+    <link rel=stylesheet href=css/style.css />
+  </head>
+  <body>
+    <div class=app-shell>
+      <aside class=sidebar>
+        <div class=brand>
+          <div class=brand-mark>
+            <span>Ctl</span>
+            <strong>S</strong>
+          </div>
+          <p>Монитор подписок</p>
+        </div>
+        <nav class=main-nav aria-label=Разделы>
+          <button class=nav-link active data-target=dashboard>Главная</button>
+          <button class=nav-link data-target=subscriptions>Подписки</button>
+          <button class=nav-link data-target=calendar>Календарь</button>
+          <button class=nav-link data-target=analytics>Аналитика</button>
+          <button class=nav-link data-target=settings>Настройки</button>
+        </nav>
+        <button class=add-subscription type=button>+ Добавить подписку</button>
+      </aside>
+      <div class=content-shell>
+        <header class=top-bar>
+          <div class=search-field>
+            <input type=search placeholder=Поиск подписок... />
+          </div>
+          <div class=top-actions>
+            <button class=icon-button aria-label=Уведомления>
+              <span class=dot>3</span>
+              <svg viewBox=0 0 20 20 aria-hidden=true>
+                <path d=M10 2a4 4 0 0 1 4 4v3.2l.8 1.2H5.2L6 9.2V6a4 4 0 0 1 4-4zm-2 14h4a2 2 0 0 1-4 0z fill=currentColor />
+              </svg>
+            </button>
+            <span class=avatar>П</span>
+          </div>
+        </header>
+        <main class=views>
+          <section class=view dashboard active data-view=dashboard>
+            <div class=page-heading>
+              <div>
+                <h1>Главная</h1>
+                <p>Обзор расходов и подписок</p>
+              </div>
+              <button class=ghost-button type=button>Экспорт</button>
+            </div>
+            <div class=status-cards>
+              <article class=card total-card>
+                <p>Всего в месяц</p>
+                <div class=value>6 045 ₽</div>
+                <small>+12% за месяц</small>
+              </article>
+              <article class=card mini-card>
+                <p>Активных</p>
+                <div class=value>7</div>
+              </article>
+              <article class=card mini-card>
+                <p>Следующий платёж</p>
+                <div class=value>-1 дн.</div>
+                <small>Notion</small>
+              </article>
+              <article class=card mini-card>
+                <p>Экономия</p>
+                <div class=value green>1 240 ₽</div>
+              </article>
+            </div>
+            <div class=graph-block>
+              <div class=graph-card>
+                <div class=card-title>
+                  <h2>Динамика расходов</h2>
+                  <button class=ghost-button type=button>Подробнее</button>
+                </div>
+                <svg viewBox=0 0 240 120 class=line-chart role=img aria-label=График расходов>
+                  <polyline points=0,100 40,90 80,95 120,78 160,85 200,70 240,82 />
+                </svg>
+                <div class=graph-legend>
+                  <span>Мин 4 850 ₽</span>
+                  <span>Макс 7 150 ₽</span>
+                </div>
+              </div>
+              <div class=list-card>
+                <h2>Ближайшие платежи</h2>
+                <ul class=upcoming-list>
+                  <li><strong>Spotify</strong><span>Через 2 дня</span><span class=price>169 ₽</span></li>
+                  <li><strong>Okko</strong><span>Через 5 дней</span><span class=price>599 ₽</span></li>
+                  <li><strong>Яндекс Плюс</strong><span>Через 7 дней</span><span class=price>399 ₽</span></li>
+                </ul>
+                <button class=ghost-button type=button>Посмотреть все</button>
+              </div>
+            </div>
+            <article class=card warning-card>
+              <p>Скоро списание 3 499 ₽ за Adobe Creative Cloud. Проверьте баланс.</p>
+            </article>
+          </section>
+          <section class=view subscriptions data-view=subscriptions>
+            <div class=page-heading>
+              <div>
+                <h1>Подписки</h1>
+                <p>Упорядочьте списания</p>
+              </div>
+              <div class=filter-group>
+                <input type=search placeholder=Поиск />
+                <button class=ghost-button type=button>Категория</button>
+              </div>
+            </div>
+            <div class=subscription-list>
+              <article class=subscription-card>
+                <div class=badge red>Я</div>
+                <div>
+                  <strong>Яндекс Плюс</strong>
+                  <p>399 ₽ · Сбер</p>
+                </div>
+                <span class=tag>Активна</span>
+              </article>
+              <article class=subscription-card>
+                <div class=badge green>S</div>
+                <div>
+                  <strong>Spotify</strong>
+                  <p>169 ₽ · Tinkoff</p>
+                </div>
+                <span class=tag>Активна</span>
+              </article>
+              <article class=subscription-card>
+                <div class=badge orange>O</div>
+                <div>
+                  <strong>Okko</strong>
+                  <p>599 ₽ · Альфа</p>
+                </div>
+                <span class=tag>Активна</span>
+              </article>
+            </div>
+          </section>
+          <section class=view calendar data-view=calendar>
+            <div class=page-heading>
+              <div>
+                <h1>Календарь платежей</h1>
+                <p>Следите за оплатами</p>
+              </div>
+            </div>
+            <div class=calendar-card>
+              <div class=calendar-head>
+                <strong>Март 2026</strong>
+                <div>
+                  <button type=button>‹</button>
+                  <button type=button>›</button>
+                </div>
+              </div>
+              <div class=calendar-grid>
+                <span class=header>Пн</span>
+                <span class=header>Вт</span>
+                <span class=header>Ср</span>
+                <span class=header>Чт</span>
+                <span class=header>Пт</span>
+                <span class=header>Сб</span>
+                <span class=header>Вс</span>
+                <span class=empty></span>
+                <span class=empty></span>
+                <span class=empty></span>
+                <span class=empty></span>
+                <span class=day>1</span>
+                <span class=day>2</span>
+                <span class=day>3</span>
+                <span class=day>4</span>
+                <span class=day>5</span>
+                <span class=day>6</span>
+                <span class=day active>7</span>
+              </div>
+            </div>
+          </section>
+          <section class=view analytics data-view=analytics>
+            <div class=page-heading>
+              <div>
+                <h1>Аналитика</h1>
+                <p>Тренды, категории, сравнение</p>
+              </div>
+            </div>
+            <div class=status-cards tight>
+              <article class=card mini-card>
+                <p>Средний расход</p>
+                <div class=value>6 081 ₽</div>
+              </article>
+              <article class=card mini-card>
+                <p>Тренд</p>
+                <div class=value green>-4.4%</div>
+              </article>
+              <article class=card mini-card>
+                <p>Экономия</p>
+                <div class=value green>1 240 ₽</div>
+              </article>
+            </div>
+            <div class=analytics-block>
+              <article class=legend-card>
+                <h2>Категории</h2>
+                <ul>
+                  <li><span class=dot streaming></span>Стриминг · 998 ₽</li>
+                  <li><span class=dot software></span>ПО · 4 579 ₽</li>
+                  <li><span class=dot music></span>Музыка · 169 ₽</li>
+                </ul>
+              </article>
+              <div class=line-card>
+                <h2>Динамика</h2>
+                <svg viewBox=0 0 240 120 class=line-chart aria-label=График>
+                  <polyline points=0,105 40,95 80,90 120,80 160,90 200,70 240,80 />
+                </svg>
+              </div>
+            </div>
+          </section>
+          <section class=view settings data-view=settings>
+            <div class=page-heading>
+              <div>
+                <h1>Настройки</h1>
+                <p>Управление аккаунтом</p>
+              </div>
+            </div>
+            <div class=card settings-card>
+              <div class=tabs>
+                <button class=tab active type=button>Профиль</button>
+                <button class=tab type=button>Уведомления</button>
+              </div>
+              <div class=form-grid>
+                <label>Имя<input value=Пётр /></label>
+                <label>Фамилия<input value=Иванов /></label>
+                <label>Email<input value=petr@example.com /></label>
+                <label>Телефон<input value=+7 999 123-45-67 /></label>
+              </div>
+              <div class=form-actions>
+                <button class=primary-button type=button>Сохранить</button>
+                <button class=ghost-button type=button>Отмена</button>
+              </div>
+            </div>
+          </section>
+        </main>
+        <button class=help-float type=button aria-label=Справка>?</button>
+      </div>
+    </div>
+    <script src=js/script.js></script>
+  </body>
+</html>
