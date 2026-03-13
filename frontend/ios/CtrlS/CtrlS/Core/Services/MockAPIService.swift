@@ -108,4 +108,36 @@ final class MockAPIService: APIService {
             )
         ]
     }
+
+    func fetchAnalyticsOverview(period: AnalyticsPeriod, category: String?) async throws -> AnalyticsOverview {
+        let metrics = [
+            AnalyticsMetric(title: "Средний расход", value: "6 286 ₽", accentName: "purple", icon: "dollarsign.circle"),
+            AnalyticsMetric(title: "Тренд", value: "-4.4%", accentName: "green", icon: "arrow.down.right"),
+            AnalyticsMetric(title: "Экономия", value: "1 240 ₽", accentName: "green", icon: "leaf"),
+            AnalyticsMetric(title: "Эффективность", value: "87%", accentName: "blue", icon: "percent")
+        ]
+
+        let chartPoints = [
+            AnalyticsChartPoint(label: "Стриминг", value: 4850),
+            AnalyticsChartPoint(label: "Музыка", value: 5600),
+            AnalyticsChartPoint(label: "ПО", value: 5150),
+            AnalyticsChartPoint(label: "Образование", value: 6200),
+            AnalyticsChartPoint(label: "Облако", value: 7150)
+        ]
+
+        let categories = [
+            AnalyticsCategoryBreakdown(title: "ПО", value: 4579, formattedValue: "4 579 ₽", colorName: "orange"),
+            AnalyticsCategoryBreakdown(title: "Стриминг", value: 998, formattedValue: "998 ₽", colorName: "purple"),
+            AnalyticsCategoryBreakdown(title: "Музыка", value: 169, formattedValue: "169 ₽", colorName: "pink"),
+            AnalyticsCategoryBreakdown(title: "Образование", value: 299, formattedValue: "299 ₽", colorName: "green")
+        ]
+
+        return AnalyticsOverview(
+            metrics: metrics,
+            chartPoints: chartPoints,
+            chartMin: "4 850 ₽",
+            chartMax: "7 150 ₽",
+            categories: categories
+        )
+    }
 }

@@ -43,3 +43,39 @@ struct NotificationItem: Identifiable {
     let message: String
     let time: String
 }
+
+enum AnalyticsPeriod: String {
+    case month
+    case halfYear = "half_year"
+    case year
+}
+
+struct AnalyticsMetric: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: String
+    let accentName: String
+    let icon: String
+}
+
+struct AnalyticsChartPoint: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: Double
+}
+
+struct AnalyticsCategoryBreakdown: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: Double
+    let formattedValue: String
+    let colorName: String
+}
+
+struct AnalyticsOverview {
+    let metrics: [AnalyticsMetric]
+    let chartPoints: [AnalyticsChartPoint]
+    let chartMin: String
+    let chartMax: String
+    let categories: [AnalyticsCategoryBreakdown]
+}
