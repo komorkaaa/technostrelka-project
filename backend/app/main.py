@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 from app.database import Base, engine
 import app.models  # noqa: F401 Ensures all models are registered
+from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router
 from app.routes.email import router as email_router
 from app.routes.subscriptions import router as subscriptions_router
@@ -28,3 +29,4 @@ def db_check():
 app.include_router(auth_router)
 app.include_router(email_router)
 app.include_router(subscriptions_router)
+app.include_router(analytics_router)
