@@ -19,3 +19,8 @@ class ParsedSubscription(BaseModel):
     currency: Optional[str] = None
     sender: str
     subject: str
+
+
+class EmailImportResult(BaseModel):
+    parsed: list[ParsedSubscription]
+    created: int
