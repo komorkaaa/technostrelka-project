@@ -11,20 +11,15 @@ app = FastAPI(title="Email Parser API")
 
 Base.metadata.create_all(bind=engine)
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/db-check")
 def db_check():
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     return {"db": "ok"}
-
-@app.get("/db-config")
-def db_config():
-    return {
-        "url": str(engine.url),
-        "host": engine.url.host,
-        "port": engine.url.port,
-        "database": engine.url.database,
-    }
 
 app.include_router(email_router)
 app.include_router(subscriptions_router)

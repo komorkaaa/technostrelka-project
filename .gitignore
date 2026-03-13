@@ -26,6 +26,8 @@ replay_pid*
 .idea
 .venv
 .env
+.env.*
+.secrets/
 __pycache__/
 *.py[cod]
 *$py.class
