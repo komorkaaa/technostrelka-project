@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
+    @State private var showLogoutConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -122,7 +123,7 @@ private extension ProfileView {
     }
 
     var logoutButton: some View {
-        Button(action: {}) {
+        Button(action: { showLogoutConfirm = true }) {
             Text("Выйти из аккаунта")
                 .font(DS.Typography.body)
                 .foregroundStyle(.red)
@@ -136,7 +137,14 @@ private extension ProfileView {
                 )
         }
         .padding(.top, DS.Spacing.sm)
-        .onTapGesture { activeSheet = SheetDestination(title: "Выход из аккаунта") }
+        .alert("Выйти из аккаунта?", isPresented: $showLogoutConfirm) {
+            Button("Выйти", role: .destructive) {
+                SessionManager.shared.logout()
+            }
+            Button("Отмена", role: .cancel) {}
+        } message: {
+            Text("Вы уверены, что хотите выйти?")
+        }
     }
 
     func sectionTitle(_ text: String) -> some View {

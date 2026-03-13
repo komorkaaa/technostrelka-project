@@ -4,6 +4,7 @@ import Combine
 @MainActor
 final class NotificationsViewModel: ObservableObject {
     @Published var notifications: [NotificationItem] = []
+    @Published var errorMessage: String?
 
     private let service: APIService
 
@@ -13,8 +14,13 @@ final class NotificationsViewModel: ObservableObject {
 
     func load() async {
         do {
+            errorMessage = nil
             notifications = try await service.fetchNotifications()
+        } catch let apiError as APIError {
+            errorMessage = apiError.message
+            notifications = []
         } catch {
+            errorMessage = error.localizedDescription
             notifications = []
         }
     }
