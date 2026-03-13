@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var isNotificationsPresented = false
+    @State private var activeSheet: SheetDestination?
 
     var body: some View {
         NavigationStack {
@@ -22,6 +23,9 @@ struct HomeView: View {
             .navigationTitle("Главная")
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(item: $activeSheet) { sheet in
+                PlaceholderView(title: sheet.title)
             }
         }
     }
@@ -78,6 +82,9 @@ private extension HomeView {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .padding(DS.Spacing.lg)
+            .onTapGesture {
+                activeSheet = SheetDestination(title: "Добавить подписку")
+            }
         }
         .frame(maxWidth: .infinity, minHeight: 180)
     }
@@ -112,11 +119,13 @@ private extension HomeView {
                 title: "Подписок",
                 value: "7"
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Подписки") }
             StatCard(
                 icon: "calendar",
                 title: "Ближайший",
                 value: "-1 дн."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Ближайший платёж") }
         }
     }
 
@@ -129,13 +138,18 @@ private extension HomeView {
                 Button("Все") {}
                     .font(DS.Typography.caption)
                     .foregroundStyle(DS.ColorToken.accent)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Все платежи") }
             }
 
             VStack(spacing: DS.Spacing.sm) {
                 PaymentRow(title: "Notion", subtitle: "Через 1 дн.", amount: "8 $", color: .black)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Notion") }
                 PaymentRow(title: "Spotify", subtitle: "Через 2 дн.", amount: "169 ₽", color: .green)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
                 PaymentRow(title: "Okko", subtitle: "Через 5 дн.", amount: "599 ₽", color: .orange)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
                 PaymentRow(title: "Яндекс Плюс", subtitle: "Через 7 дн.", amount: "399 ₽", color: .red)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
             }
         }
     }
@@ -146,12 +160,21 @@ private extension HomeView {
                 .font(DS.Typography.headline)
             HStack(spacing: DS.Spacing.md) {
                 CategoryChip(title: "Стриминг", count: "2")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Стриминг") }
                 CategoryChip(title: "Музыка", count: "3")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Музыка") }
                 CategoryChip(title: "ПО", count: "4")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: ПО") }
                 CategoryChip(title: "Облако", count: "5")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Облако") }
             }
         }
     }
+}
+
+private struct SheetDestination: Identifiable {
+    let id = UUID()
+    let title: String
 }
 
 private struct StatCard: View {

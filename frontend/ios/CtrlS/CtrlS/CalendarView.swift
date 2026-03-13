@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarView: View {
     @State private var isNotificationsPresented = false
+    @State private var activeSheet: SheetDestination?
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,9 @@ struct CalendarView: View {
             }
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(item: $activeSheet) { sheet in
+                PlaceholderView(title: sheet.title)
             }
         }
     }
@@ -71,8 +75,8 @@ private extension CalendarView {
                     .font(DS.Typography.headline)
                 Spacer()
                 HStack(spacing: 8) {
-                    navButton(system: "chevron.left")
-                    navButton(system: "chevron.right")
+                    navButton(system: "chevron.left", title: "Предыдущий месяц")
+                    navButton(system: "chevron.right", title: "Следующий месяц")
                 }
             }
             CalendarGrid()
@@ -92,19 +96,29 @@ private extension CalendarView {
                 .font(DS.Typography.headline)
             VStack(spacing: DS.Spacing.sm) {
                 PaymentRow(title: "Spotify", subtitle: "Через 2 дн.", amount: "169 ₽", color: .green)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
                 PaymentRow(title: "Okko", subtitle: "Через 5 дн.", amount: "599 ₽", color: .orange)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
                 PaymentRow(title: "Яндекс Плюс", subtitle: "Через 7 дн.", amount: "399 ₽", color: .red)
+                    .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
             }
         }
     }
 
-    func navButton(system: String) -> some View {
-        Image(systemName: system)
-            .font(.system(size: 12, weight: .bold))
-            .frame(width: 28, height: 28)
-            .background(DS.ColorToken.chipBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    func navButton(system: String, title: String) -> some View {
+        Button(action: { activeSheet = SheetDestination(title: title) }) {
+            Image(systemName: system)
+                .font(.system(size: 12, weight: .bold))
+                .frame(width: 28, height: 28)
+                .background(DS.ColorToken.chipBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
     }
+}
+
+private struct SheetDestination: Identifiable {
+    let id = UUID()
+    let title: String
 }
 
 private struct CalendarGrid: View {

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @State private var isNotificationsPresented = false
+    @State private var activeSheet: SheetDestination?
 
     var body: some View {
         NavigationStack {
@@ -31,6 +32,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(item: $activeSheet) { sheet in
+                PlaceholderView(title: sheet.title)
             }
         }
     }
@@ -82,8 +86,11 @@ private extension ProfileView {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             sectionTitle("Настройки")
             SettingRow(icon: "person", title: "Личная информация", subtitle: "Имя, email, телефон")
+                .onTapGesture { activeSheet = SheetDestination(title: "Личная информация") }
             SettingRow(icon: "bell", title: "Уведомления", subtitle: "Настройка оповещений")
+                .onTapGesture { activeSheet = SheetDestination(title: "Уведомления") }
             SettingRow(icon: "creditcard", title: "Способы оплаты", subtitle: "Карты и интеграции")
+                .onTapGesture { activeSheet = SheetDestination(title: "Способы оплаты") }
         }
     }
 
@@ -92,6 +99,7 @@ private extension ProfileView {
             sectionTitle("Предпочтения")
             ToggleRow(icon: "bell.badge", title: "Push‑уведомления", isOn: true)
             SettingRow(icon: "globe", title: "Язык и регион", subtitle: "Русский, Москва (GMT+3)")
+                .onTapGesture { activeSheet = SheetDestination(title: "Язык и регион") }
         }
     }
 
@@ -99,6 +107,7 @@ private extension ProfileView {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             sectionTitle("Безопасность")
             SettingRow(icon: "lock.shield", title: "Пароль и безопасность", subtitle: "Смена пароля, 2FA")
+                .onTapGesture { activeSheet = SheetDestination(title: "Пароль и безопасность") }
         }
     }
 
@@ -106,7 +115,9 @@ private extension ProfileView {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             sectionTitle("Прочее")
             SettingRow(icon: "questionmark.circle", title: "Помощь и поддержка", subtitle: "FAQ, контакты")
+                .onTapGesture { activeSheet = SheetDestination(title: "Помощь и поддержка") }
             SettingRow(icon: "arrow.down.circle", title: "Экспорт данных", subtitle: "Скачать все данные")
+                .onTapGesture { activeSheet = SheetDestination(title: "Экспорт данных") }
         }
     }
 
@@ -125,6 +136,7 @@ private extension ProfileView {
                 )
         }
         .padding(.top, DS.Spacing.sm)
+        .onTapGesture { activeSheet = SheetDestination(title: "Выход из аккаунта") }
     }
 
     func sectionTitle(_ text: String) -> some View {
@@ -133,6 +145,11 @@ private extension ProfileView {
             .foregroundStyle(DS.ColorToken.textSecondary)
             .padding(.top, DS.Spacing.xs)
     }
+}
+
+private struct SheetDestination: Identifiable {
+    let id = UUID()
+    let title: String
 }
 
 private struct StatMini: View {

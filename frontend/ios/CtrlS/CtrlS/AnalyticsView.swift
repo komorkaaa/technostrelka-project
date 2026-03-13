@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AnalyticsView: View {
     @State private var isNotificationsPresented = false
+    @State private var activeSheet: SheetDestination?
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,9 @@ struct AnalyticsView: View {
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
             }
+            .sheet(item: $activeSheet) { sheet in
+                PlaceholderView(title: sheet.title)
+            }
         }
     }
 }
@@ -41,9 +45,13 @@ private extension AnalyticsView {
     var metricsGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Spacing.md), count: 2), spacing: DS.Spacing.md) {
             MetricCard(title: "Средний расход", value: "6 286 ₽", accent: .purple, icon: "dollarsign.circle")
+                .onTapGesture { activeSheet = SheetDestination(title: "Средний расход") }
             MetricCard(title: "Тренд", value: "-4.4%", accent: .green, icon: "arrow.down.right")
+                .onTapGesture { activeSheet = SheetDestination(title: "Тренд") }
             MetricCard(title: "Экономия", value: "1 240 ₽", accent: .green, icon: "leaf")
+                .onTapGesture { activeSheet = SheetDestination(title: "Экономия") }
             MetricCard(title: "Эффективность", value: "87%", accent: .blue, icon: "percent")
+                .onTapGesture { activeSheet = SheetDestination(title: "Эффективность") }
         }
     }
 
@@ -73,9 +81,13 @@ private extension AnalyticsView {
             PieChart()
             VStack(spacing: DS.Spacing.sm) {
                 LegendRow(color: .purple, title: "Стриминг", value: "998 ₽")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Стриминг") }
                 LegendRow(color: .pink, title: "Музыка", value: "169 ₽")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Музыка") }
                 LegendRow(color: .orange, title: "ПО", value: "4 579 ₽")
+                    .onTapGesture { activeSheet = SheetDestination(title: "ПО") }
                 LegendRow(color: .green, title: "Образование", value: "299 ₽")
+                    .onTapGesture { activeSheet = SheetDestination(title: "Образование") }
             }
         }
         .padding(DS.Spacing.md)
@@ -102,7 +114,13 @@ private extension AnalyticsView {
         .padding(DS.Spacing.md)
         .background(Color.green.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+        .onTapGesture { activeSheet = SheetDestination(title: "Рекомендации") }
     }
+}
+
+private struct SheetDestination: Identifiable {
+    let id = UUID()
+    let title: String
 }
 
 private struct MetricCard: View {

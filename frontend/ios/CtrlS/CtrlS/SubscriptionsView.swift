@@ -4,6 +4,7 @@ struct SubscriptionsView: View {
     @State private var query = ""
     @State private var selectedTab: Tab = .all
     @State private var isNotificationsPresented = false
+    @State private var activeSheet: SheetDestination?
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,9 @@ struct SubscriptionsView: View {
             }
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(item: $activeSheet) { sheet in
+                PlaceholderView(title: sheet.title)
             }
         }
     }
@@ -74,6 +78,7 @@ private extension SubscriptionsView {
                             .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
                     )
             }
+            .onTapGesture { activeSheet = SheetDestination(title: "Фильтры") }
         }
     }
 
@@ -106,6 +111,7 @@ private extension SubscriptionsView {
                 status: "Активна",
                 date: "20 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
             SubscriptionRow(
                 title: "Spotify",
                 subtitle: "Премиум подписка на музыкальный сервис",
@@ -113,6 +119,7 @@ private extension SubscriptionsView {
                 status: "Активна",
                 date: "15 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
             SubscriptionRow(
                 title: "Adobe Creative Cloud",
                 subtitle: "Полный пакет приложений Adobe",
@@ -120,6 +127,7 @@ private extension SubscriptionsView {
                 status: "Активна",
                 date: "25 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Adobe Creative Cloud") }
             SubscriptionRow(
                 title: "Okko",
                 subtitle: "Онлайн‑кинотеатр",
@@ -127,6 +135,7 @@ private extension SubscriptionsView {
                 status: "Активна",
                 date: "18 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
             SubscriptionRow(
                 title: "Notion",
                 subtitle: "Сервис для организации работы",
@@ -134,6 +143,7 @@ private extension SubscriptionsView {
                 status: "Активна",
                 date: "12 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Notion") }
             SubscriptionRow(
                 title: "Readymag",
                 subtitle: "Конструктор сайтов",
@@ -141,8 +151,14 @@ private extension SubscriptionsView {
                 status: "На паузе",
                 date: "28 мар."
             )
+            .onTapGesture { activeSheet = SheetDestination(title: "Readymag") }
         }
     }
+}
+
+private struct SheetDestination: Identifiable {
+    let id = UUID()
+    let title: String
 }
 
 private struct SubscriptionRow: View {
