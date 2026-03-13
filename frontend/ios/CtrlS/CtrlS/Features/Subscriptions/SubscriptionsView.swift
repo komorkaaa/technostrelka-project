@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct SubscriptionsView: View {
+    @EnvironmentObject private var session: SessionManager
     @State private var query = ""
     @State private var selectedTab: Tab = .all
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
-    @StateObject private var viewModel = SubscriptionsViewModel(service: MockAPIService.shared)
+    @StateObject private var viewModel = SubscriptionsViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -13,6 +14,11 @@ struct SubscriptionsView: View {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                     searchBar
                     filterTabs
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(DS.Typography.caption)
+                            .foregroundStyle(.red)
+                    }
                     subscriptionsList
                 }
                 .padding(.horizontal, DS.Spacing.md)
@@ -35,15 +41,14 @@ struct SubscriptionsView: View {
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
-            .task {
-                await viewModel.load(query: query, status: selectedTab.status)
-            }
+            .task(id: session.accessToken) { await viewModel.load(query: query, status: selectedTab.status) }
         }
     }
 }
 
 #Preview {
     SubscriptionsView()
+        .environmentObject(SessionManager.shared)
 }
 
 private extension SubscriptionsView {

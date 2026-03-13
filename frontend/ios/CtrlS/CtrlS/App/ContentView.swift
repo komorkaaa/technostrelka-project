@@ -8,37 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var session: SessionManager
+
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Главная", systemImage: "house")
-                }
-
-            SubscriptionsView()
-                .tabItem {
-                    Label("Подписки", systemImage: "rectangle.stack")
-                }
-
-            CalendarView()
-                .tabItem {
-                    Label("Календарь", systemImage: "calendar")
-                }
-
-            AnalyticsView()
-                .tabItem {
-                    Label("Аналитика", systemImage: "chart.bar")
-                }
-
-            ProfileView()
-                .tabItem {
-                    Label("Профиль", systemImage: "person")
-                }
+        Group {
+            if session.isAuthenticated {
+                MainTabView()
+            } else {
+                AuthView()
+            }
         }
-        .tint(Color.purple)
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(SessionManager.shared)
 }

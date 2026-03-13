@@ -12,6 +12,7 @@ struct CtrlSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(SessionManager.shared)
         }
     }
 }
