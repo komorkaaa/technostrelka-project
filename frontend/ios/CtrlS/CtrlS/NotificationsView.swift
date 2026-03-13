@@ -1,27 +1,22 @@
 import SwiftUI
 
 struct NotificationsView: View {
+    @StateObject private var viewModel = NotificationsViewModel(service: MockAPIService.shared)
+
     var body: some View {
         NavigationStack {
-            List {
+            List(viewModel.notifications) { item in
                 NotificationRow(
-                    title: "Списание через 3 дня",
-                    message: "Adobe Creative Cloud — 3 499 ₽",
-                    time: "Сегодня"
-                )
-                NotificationRow(
-                    title: "Новый платёж добавлен",
-                    message: "Notion — 8 $",
-                    time: "Вчера"
-                )
-                NotificationRow(
-                    title: "Экономия за месяц",
-                    message: "Вы сэкономили 1 240 ₽",
-                    time: "2 дня назад"
+                    title: item.title,
+                    message: item.message,
+                    time: item.time
                 )
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Уведомления")
+            .task {
+                await viewModel.load()
+            }
         }
     }
 }

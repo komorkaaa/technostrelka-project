@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
+    @StateObject private var viewModel = HomeViewModel(service: MockAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,9 @@ struct HomeView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
+            }
+            .task {
+                await viewModel.load()
             }
         }
     }
@@ -63,10 +67,10 @@ private extension HomeView {
                 Text("Всего в месяц")
                     .font(DS.Typography.body)
                     .foregroundStyle(.white.opacity(0.9))
-                Text("6 045 ₽")
+                Text(viewModel.summary?.totalMonthly ?? "—")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
-                Text("+12% от прошлого месяца")
+                Text(viewModel.summary?.changeText ?? "")
                     .font(DS.Typography.caption)
                     .foregroundStyle(.white.opacity(0.8))
             }
@@ -97,7 +101,7 @@ private extension HomeView {
                 Text("Скоро списание")
                     .font(DS.Typography.body)
                     .foregroundStyle(DS.ColorToken.textPrimary)
-                Text("Через 3 дня будет списано 3 499 ₽ за Adobe Creative Cloud")
+                Text(viewModel.summary?.upcomingAlert ?? "Нет ближайших списаний")
                     .font(DS.Typography.caption)
                     .foregroundStyle(DS.ColorToken.textSecondary)
             }
@@ -117,13 +121,13 @@ private extension HomeView {
             StatCard(
                 icon: "creditcard",
                 title: "Подписок",
-                value: "7"
+                value: viewModel.summary?.activeCount ?? "—"
             )
             .onTapGesture { activeSheet = SheetDestination(title: "Подписки") }
             StatCard(
                 icon: "calendar",
                 title: "Ближайший",
-                value: "-1 дн."
+                value: viewModel.summary?.nextPayment ?? "—"
             )
             .onTapGesture { activeSheet = SheetDestination(title: "Ближайший платёж") }
         }
@@ -142,14 +146,10 @@ private extension HomeView {
             }
 
             VStack(spacing: DS.Spacing.sm) {
-                PaymentRow(title: "Notion", subtitle: "Через 1 дн.", amount: "8 $", color: .black)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Notion") }
-                PaymentRow(title: "Spotify", subtitle: "Через 2 дн.", amount: "169 ₽", color: .green)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
-                PaymentRow(title: "Okko", subtitle: "Через 5 дн.", amount: "599 ₽", color: .orange)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
-                PaymentRow(title: "Яндекс Плюс", subtitle: "Через 7 дн.", amount: "399 ₽", color: .red)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
+                ForEach(viewModel.upcomingPayments) { payment in
+                    PaymentRow(title: payment.title, subtitle: payment.subtitle, amount: payment.amount, color: color(from: payment.colorName))
+                        .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
+                }
             }
         }
     }
@@ -159,15 +159,21 @@ private extension HomeView {
             Text("Популярные категории")
                 .font(DS.Typography.headline)
             HStack(spacing: DS.Spacing.md) {
-                CategoryChip(title: "Стриминг", count: "2")
-                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Стриминг") }
-                CategoryChip(title: "Музыка", count: "3")
-                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Музыка") }
-                CategoryChip(title: "ПО", count: "4")
-                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: ПО") }
-                CategoryChip(title: "Облако", count: "5")
-                    .onTapGesture { activeSheet = SheetDestination(title: "Категория: Облако") }
+                ForEach(viewModel.categories) { category in
+                    CategoryChip(title: category.title, count: category.count)
+                        .onTapGesture { activeSheet = SheetDestination(title: "Категория: \(category.title)") }
+                }
             }
+        }
+    }
+
+    func color(from name: String) -> Color {
+        switch name {
+        case "black": return .black
+        case "green": return .green
+        case "orange": return .orange
+        case "red": return .red
+        default: return .gray
         }
     }
 }
