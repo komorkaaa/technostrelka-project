@@ -6,4 +6,5 @@ protocol APIService {
     func fetchCategories() async throws -> [CategoryChipModel]
     func fetchSubscriptions(query: String?, status: SubscriptionStatus?) async throws -> [Subscription]
     func fetchNotifications() async throws -> [NotificationItem]
+    func fetchAnalyticsOverview(period: AnalyticsPeriod, category: String?) async throws -> AnalyticsOverview
 }
