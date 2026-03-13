@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 
-from app.database import Base, engine
+from app.core.db import Base, engine
 import app.models  # noqa: F401 Ensures all models are registered
 from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router

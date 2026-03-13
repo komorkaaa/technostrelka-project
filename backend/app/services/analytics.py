@@ -4,22 +4,15 @@ from collections import defaultdict
 from decimal import Decimal
 from typing import Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
 from app.models.subscription import Subscription
-from app.models.user import User
 from app.schemas.analytics import (
     AnalyticsChartPoint,
     AnalyticsChartResponse,
     AnalyticsPeriodTotals,
     AnalyticsResponse,
 )
-from app.security import get_current_user
-
-
-router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 PERIOD_MULTIPLIERS = {
@@ -43,12 +36,8 @@ def _load_subscriptions(db: Session, user_id: int, category: Optional[str] = Non
     return query.all()
 
 
-@router.get("", response_model=AnalyticsResponse)
-def get_analytics(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    subs = _load_subscriptions(db, current_user.id)
+def get_analytics(db: Session, user_id: int) -> AnalyticsResponse:
+    subs = _load_subscriptions(db, user_id)
 
     by_category: Dict[str, Decimal] = defaultdict(lambda: Decimal("0.00"))
     by_service: Dict[str, Decimal] = defaultdict(lambda: Decimal("0.00"))
@@ -70,17 +59,16 @@ def get_analytics(
     return AnalyticsResponse(by_category=by_category, by_service=by_service, totals=totals)
 
 
-@router.get("/chart", response_model=AnalyticsChartResponse)
 def get_analytics_chart(
+    db: Session,
+    user_id: int,
     period: str = "month",
     category: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+) -> AnalyticsChartResponse:
     if period not in PERIOD_MULTIPLIERS:
-        raise HTTPException(status_code=400, detail="period must be month, half_year, or year")
+        raise ValueError("period must be month, half_year, or year")
 
-    subs = _load_subscriptions(db, current_user.id, category=category)
+    subs = _load_subscriptions(db, user_id, category=category)
 
     by_category: Dict[str, Decimal] = defaultdict(lambda: Decimal("0.00"))
     month_total = Decimal("0.00")

@@ -18,3 +18,6 @@ class UpcomingNotificationItem(BaseModel):
 class UpcomingNotificationsResponse(BaseModel):
     days: int
     items: list[UpcomingNotificationItem]
+
+
+__all__ = ["UpcomingNotificationItem", "UpcomingNotificationsResponse"]

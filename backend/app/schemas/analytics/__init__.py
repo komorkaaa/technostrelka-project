@@ -28,3 +28,11 @@ class AnalyticsChartResponse(BaseModel):
     totals: AnalyticsPeriodTotals
     series: List[AnalyticsChartPoint]
     category: Optional[str] = None
+
+
+__all__ = [
+    "AnalyticsPeriodTotals",
+    "AnalyticsResponse",
+    "AnalyticsChartPoint",
+    "AnalyticsChartResponse",
+]

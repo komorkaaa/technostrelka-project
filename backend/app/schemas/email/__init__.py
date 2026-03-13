@@ -24,3 +24,6 @@ class ParsedSubscription(BaseModel):
 class EmailImportResult(BaseModel):
     parsed: list[ParsedSubscription]
     created: int
+
+
+__all__ = ["EmailImportRequest", "ParsedSubscription", "EmailImportResult"]

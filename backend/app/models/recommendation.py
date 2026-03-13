@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.core.db import Base
 
 
 class Recommendation(Base):

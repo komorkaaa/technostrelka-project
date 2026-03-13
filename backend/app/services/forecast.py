@@ -4,17 +4,10 @@ from calendar import monthrange
 from datetime import date
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
 from app.models.subscription import Subscription
-from app.models.user import User
 from app.schemas.forecast_api import ForecastResponse
-from app.security import get_current_user
-
-
-router = APIRouter(prefix="/forecast", tags=["forecast"])
 
 
 def _add_months(value: date, months: int) -> date:
@@ -31,7 +24,7 @@ def _next_occurrence(start: date, period_months: int, today: date) -> date:
     return current
 
 
-def _forecast_totals(db: Session, user_id: int) -> ForecastResponse:
+def get_forecast(db: Session, user_id: int) -> ForecastResponse:
     subs = (
         db.query(Subscription)
         .filter(Subscription.user_id == user_id, Subscription.amount > 0)
@@ -52,7 +45,7 @@ def _forecast_totals(db: Session, user_id: int) -> ForecastResponse:
             continue
         amount = Decimal(sub.amount)
         period_months = 12 if sub.billing_period == "yearly" else 1
-        start_date = sub.next_billing_date or today
+        start_date = sub.next_billing_date
         current = _next_occurrence(start_date, period_months, today)
 
         while current <= end_year:
@@ -69,11 +62,3 @@ def _forecast_totals(db: Session, user_id: int) -> ForecastResponse:
         half_year=half_year_total.quantize(Decimal("0.01")),
         year=year_total.quantize(Decimal("0.01")),
     )
-
-
-@router.get("", response_model=ForecastResponse)
-def get_forecast(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return _forecast_totals(db, current_user.id)
