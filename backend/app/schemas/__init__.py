@@ -2,6 +2,7 @@ from app.schemas.analytics import AnalyticsChartPoint, AnalyticsChartResponse, A
 from app.schemas.auth import Token, UserCreate, UserOut
 from app.schemas.email import EmailImportRequest, EmailImportResult, ParsedSubscription
 from app.schemas.forecast_api import ForecastResponse
+from app.schemas.notifications_api import UpcomingNotificationItem, UpcomingNotificationsResponse
 from app.schemas.subscription import SubscriptionCreate, SubscriptionOut, SubscriptionUpdate
 
 __all__ = [
@@ -16,6 +17,8 @@ __all__ = [
     "EmailImportResult",
     "ParsedSubscription",
     "ForecastResponse",
+    "UpcomingNotificationItem",
+    "UpcomingNotificationsResponse",
     "SubscriptionCreate",
     "SubscriptionUpdate",
     "SubscriptionOut",

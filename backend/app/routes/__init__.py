@@ -2,6 +2,7 @@ from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router
 from app.routes.email import router as email_router
 from app.routes.forecast import router as forecast_router
+from app.routes.notifications import router as notifications_router
 from app.routes.subscriptions import router as subscriptions_router
 
 __all__ = [
@@ -9,5 +10,6 @@ __all__ = [
     "auth_router",
     "email_router",
     "forecast_router",
+    "notifications_router",
     "subscriptions_router",
 ]

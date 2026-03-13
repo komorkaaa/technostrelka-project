@@ -7,6 +7,7 @@ from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router
 from app.routes.email import router as email_router
 from app.routes.forecast import router as forecast_router
+from app.routes.notifications import router as notifications_router
 from app.routes.subscriptions import router as subscriptions_router
 
 
@@ -32,3 +33,4 @@ app.include_router(email_router)
 app.include_router(subscriptions_router)
 app.include_router(analytics_router)
 app.include_router(forecast_router)
+app.include_router(notifications_router)
