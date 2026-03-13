@@ -1,28 +1,35 @@
 import SwiftUI
 
 struct NotificationsView: View {
-    @StateObject private var viewModel = NotificationsViewModel(service: MockAPIService.shared)
+    @EnvironmentObject private var session: SessionManager
+    @StateObject private var viewModel = NotificationsViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
-            List(viewModel.notifications) { item in
-                NotificationRow(
-                    title: item.title,
-                    message: item.message,
-                    time: item.time
-                )
+            List {
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .font(DS.Typography.caption)
+                        .foregroundStyle(.red)
+                }
+                ForEach(viewModel.notifications) { item in
+                    NotificationRow(
+                        title: item.title,
+                        message: item.message,
+                        time: item.time
+                    )
+                }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Уведомления")
-            .task {
-                await viewModel.load()
-            }
+            .task(id: session.accessToken) { await viewModel.load() }
         }
     }
 }
 
 #Preview {
     NotificationsView()
+        .environmentObject(SessionManager.shared)
 }
 
 private struct NotificationRow: View {

@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
-    @StateObject private var viewModel = HomeViewModel(service: MockAPIService.shared)
+    @StateObject private var viewModel = HomeViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -12,6 +13,11 @@ struct HomeView: View {
                     header
                     totalCard
                     upcomingCard
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(DS.Typography.caption)
+                            .foregroundStyle(.red)
+                    }
                     quickStats
                     paymentsSection
                     categoriesSection
@@ -28,15 +34,14 @@ struct HomeView: View {
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
-            .task {
-                await viewModel.load()
-            }
+            .task(id: session.accessToken) { await viewModel.load() }
         }
     }
 }
 
 #Preview {
     HomeView()
+        .environmentObject(SessionManager.shared)
 }
 
 private extension HomeView {
