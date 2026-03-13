@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.database import Base, engine
-import app.models  # noqa: F401  Ensures all models are registered
+import app.models  # noqa: F401 Ensures all models are registered
+from app.routes.auth import router as auth_router
 from app.routes.email import router as email_router
 from app.routes.subscriptions import router as subscriptions_router
 
@@ -11,9 +12,11 @@ app = FastAPI(title="Email Parser API")
 
 Base.metadata.create_all(bind=engine)
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.get("/db-check")
 def db_check():
@@ -21,5 +24,7 @@ def db_check():
         conn.execute(text("SELECT 1"))
     return {"db": "ok"}
 
+
+app.include_router(auth_router)
 app.include_router(email_router)
 app.include_router(subscriptions_router)

@@ -8,7 +8,7 @@ from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
-load_dotenv(ENV_PATH, override=True)
+load_dotenv(ENV_PATH, override=False)
 
 def _build_database_url():
     url = os.getenv("DATABASE_URL")
@@ -20,6 +20,16 @@ def _build_database_url():
     host = os.getenv("POSTGRES_HOST")
     port = os.getenv("POSTGRES_PORT")
     db = os.getenv("POSTGRES_DB")
+
+    missing = [name for name, value in [
+        ("POSTGRES_USER", user),
+        ("POSTGRES_PASSWORD", password),
+        ("POSTGRES_HOST", host),
+        ("POSTGRES_PORT", port),
+        ("POSTGRES_DB", db),
+    ] if not value]
+    if missing:
+        raise RuntimeError(f"Missing database env vars: {', '.join(missing)}")
 
     return URL.create(
         drivername="postgresql+psycopg2",
