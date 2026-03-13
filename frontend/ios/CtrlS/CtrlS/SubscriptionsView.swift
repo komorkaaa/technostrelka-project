@@ -3,6 +3,7 @@ import SwiftUI
 struct SubscriptionsView: View {
     @State private var query = ""
     @State private var selectedTab: Tab = .all
+    @State private var isNotificationsPresented = false
 
     var body: some View {
         NavigationStack {
@@ -20,9 +21,14 @@ struct SubscriptionsView: View {
             .navigationTitle("Подписки")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Image(systemName: "bell")
-                        .foregroundStyle(DS.ColorToken.textSecondary)
+                    Button(action: { isNotificationsPresented = true }) {
+                        Image(systemName: "bell")
+                            .foregroundStyle(DS.ColorToken.textSecondary)
+                    }
                 }
+            }
+            .sheet(isPresented: $isNotificationsPresented) {
+                NotificationsView()
             }
         }
     }

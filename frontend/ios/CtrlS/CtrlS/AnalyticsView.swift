@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AnalyticsView: View {
+    @State private var isNotificationsPresented = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -18,9 +20,14 @@ struct AnalyticsView: View {
             .navigationTitle("Аналитика")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Image(systemName: "bell")
-                        .foregroundStyle(DS.ColorToken.textSecondary)
+                    Button(action: { isNotificationsPresented = true }) {
+                        Image(systemName: "bell")
+                            .foregroundStyle(DS.ColorToken.textSecondary)
+                    }
                 }
+            }
+            .sheet(isPresented: $isNotificationsPresented) {
+                NotificationsView()
             }
         }
     }

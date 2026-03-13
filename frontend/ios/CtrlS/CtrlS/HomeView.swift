@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State private var isNotificationsPresented = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -18,6 +20,9 @@ struct HomeView: View {
             }
             .background(DS.ColorToken.screenBackground)
             .navigationTitle("Главная")
+            .sheet(isPresented: $isNotificationsPresented) {
+                NotificationsView()
+            }
         }
     }
 }
@@ -33,14 +38,16 @@ private extension HomeView {
                 .font(DS.Typography.title)
                 .foregroundStyle(DS.ColorToken.accent)
             Spacer()
-            Image(systemName: "bell")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(DS.ColorToken.textSecondary)
+            Button(action: { isNotificationsPresented = true }) {
+                Image(systemName: "bell")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DS.ColorToken.textSecondary)
+            }
         }
     }
 
     var totalCard: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .topLeading) {
             LinearGradient(
                 colors: [DS.ColorToken.accent, DS.ColorToken.accentDark],
                 startPoint: .topLeading,
@@ -68,8 +75,9 @@ private extension HomeView {
                     .frame(width: 36, height: 36)
                     .background(.white.opacity(0.2))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding(DS.Spacing.lg)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .padding(DS.Spacing.lg)
         }
         .frame(maxWidth: .infinity, minHeight: 180)
     }
