@@ -5,6 +5,7 @@ struct SubscriptionsView: View {
     @State private var selectedTab: Tab = .all
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
+    @StateObject private var viewModel = SubscriptionsViewModel(service: MockAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,9 @@ struct SubscriptionsView: View {
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
+            .task {
+                await viewModel.load(query: query, status: selectedTab.status)
+            }
         }
     }
 }
@@ -47,6 +51,14 @@ private extension SubscriptionsView {
         case all = "Все"
         case active = "Активные"
         case paused = "На паузе"
+
+        var status: SubscriptionStatus? {
+            switch self {
+            case .all: return nil
+            case .active: return .active
+            case .paused: return .paused
+            }
+        }
     }
 
     var searchBar: some View {
@@ -80,6 +92,9 @@ private extension SubscriptionsView {
             }
             .onTapGesture { activeSheet = SheetDestination(title: "Фильтры") }
         }
+        .onChange(of: query) { _, newValue in
+            Task { await viewModel.load(query: newValue, status: selectedTab.status) }
+        }
     }
 
     var filterTabs: some View {
@@ -100,58 +115,23 @@ private extension SubscriptionsView {
                 }
             }
         }
+        .onChange(of: selectedTab) { _, newValue in
+            Task { await viewModel.load(query: query, status: newValue.status) }
+        }
     }
 
     var subscriptionsList: some View {
         VStack(spacing: DS.Spacing.sm) {
-            SubscriptionRow(
-                title: "Яндекс Плюс",
-                subtitle: "Подписка на Яндекс Плюс с доступом к...",
-                price: "399 ₽ / в месяц",
-                status: "Активна",
-                date: "20 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
-            SubscriptionRow(
-                title: "Spotify",
-                subtitle: "Премиум подписка на музыкальный сервис",
-                price: "169 ₽ / в месяц",
-                status: "Активна",
-                date: "15 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
-            SubscriptionRow(
-                title: "Adobe Creative Cloud",
-                subtitle: "Полный пакет приложений Adobe",
-                price: "3 499 ₽ / в месяц",
-                status: "Активна",
-                date: "25 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Adobe Creative Cloud") }
-            SubscriptionRow(
-                title: "Okko",
-                subtitle: "Онлайн‑кинотеатр",
-                price: "599 ₽ / в месяц",
-                status: "Активна",
-                date: "18 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
-            SubscriptionRow(
-                title: "Notion",
-                subtitle: "Сервис для организации работы",
-                price: "8 $ / в месяц",
-                status: "Активна",
-                date: "12 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Notion") }
-            SubscriptionRow(
-                title: "Readymag",
-                subtitle: "Конструктор сайтов",
-                price: "16 $ / в месяц",
-                status: "На паузе",
-                date: "28 мар."
-            )
-            .onTapGesture { activeSheet = SheetDestination(title: "Readymag") }
+            ForEach(viewModel.subscriptions) { item in
+                SubscriptionRow(
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    price: item.price,
+                    status: item.status.rawValue,
+                    date: item.date
+                )
+                .onTapGesture { activeSheet = SheetDestination(title: item.title) }
+            }
         }
     }
 }
