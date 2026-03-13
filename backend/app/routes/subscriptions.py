@@ -37,7 +37,7 @@ def list_subscriptions(
 ):
     return (
         db.query(Subscription)
-        .filter(Subscription.user_id == current_user.id)
+        .filter(Subscription.user_id == current_user.id, Subscription.amount > 0)
         .offset(skip)
         .limit(limit)
         .all()
@@ -52,7 +52,11 @@ def get_subscription(
 ):
     subscription = (
         db.query(Subscription)
-        .filter(Subscription.id == subscription_id, Subscription.user_id == current_user.id)
+        .filter(
+            Subscription.id == subscription_id,
+            Subscription.user_id == current_user.id,
+            Subscription.amount > 0,
+        )
         .first()
     )
     if not subscription:
@@ -69,7 +73,11 @@ def update_subscription(
 ):
     subscription = (
         db.query(Subscription)
-        .filter(Subscription.id == subscription_id, Subscription.user_id == current_user.id)
+        .filter(
+            Subscription.id == subscription_id,
+            Subscription.user_id == current_user.id,
+            Subscription.amount > 0,
+        )
         .first()
     )
     if not subscription:
@@ -92,7 +100,11 @@ def delete_subscription(
 ):
     subscription = (
         db.query(Subscription)
-        .filter(Subscription.id == subscription_id, Subscription.user_id == current_user.id)
+        .filter(
+            Subscription.id == subscription_id,
+            Subscription.user_id == current_user.id,
+            Subscription.amount > 0,
+        )
         .first()
     )
     if not subscription:
