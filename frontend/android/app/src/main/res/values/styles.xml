@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TextAppearance.CtrlS.BottomNav" parent="@style/TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">10sp</item>
+    </style>
+</resources>
