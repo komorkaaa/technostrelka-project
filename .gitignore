@@ -31,3 +31,5 @@ replay_pid*
 __pycache__/
 *.py[cod]
 *$py.class
+*.xcuserstate
+**/xcuserdata/
