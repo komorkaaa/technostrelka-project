@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CtrlS">
         <activity
+            android:name=".SubscriptionActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainPageActivity"
             android:exported="false" />
         <activity

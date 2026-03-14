@@ -12,20 +12,20 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class MainPageActivity extends AppCompatActivity {
+public class SubscriptionActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main_page);
+        setContentView(R.layout.activity_subscription);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_page_root), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.subscription_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
 
-            View content = findViewById(R.id.content_scroll);
+            View content = findViewById(R.id.subscription_scroll);
             if (content != null) {
                 content.setPadding(
                         content.getPaddingLeft(),
@@ -38,16 +38,16 @@ public class MainPageActivity extends AppCompatActivity {
         });
 
         BottomNavigationView nav = findViewById(R.id.bottom_nav);
-        nav.setSelectedItemId(R.id.nav_home);
+        nav.setSelectedItemId(R.id.nav_subs);
 
         nav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
+                startActivity(new Intent(this, MainPageActivity.class));
+                finish();
                 return true;
             }
             if (id == R.id.nav_subs) {
-                startActivity(new Intent(this, SubscriptionActivity.class));
-                finish();
                 return true;
             }
             // Остальные пункты пока заглушки

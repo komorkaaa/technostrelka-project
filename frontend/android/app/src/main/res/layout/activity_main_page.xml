@@ -6,13 +6,22 @@
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
+    <View
+        android:id="@+id/bottom_nav_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#EDEDED"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:minHeight="72dp"
-        android:background="@drawable/bg_bottom_nav"
-        android:paddingTop="6dp"
+        android:background="@android:color/white"
+        android:paddingTop="0dp"
         android:clipToPadding="false"
         android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
