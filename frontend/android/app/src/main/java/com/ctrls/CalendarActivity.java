@@ -63,11 +63,11 @@ public class CalendarActivity extends AppCompatActivity {
                 return true;
             }
 
-//            if (id == R.id.nav_profile) {
-//                startActivity(new Intent(this, ProfileActivity.class));
-//                finish();
-//                return true;
-//            }
+            if (id == R.id.nav_profile) {
+                startActivity(new Intent(this, ProfileActivity.class));
+                finish();
+                return true;
+            }
             return true;
         });
     }

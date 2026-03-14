@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profile_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/profile_scroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="96dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:paddingBottom="12dp">
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Профиль"
+                    android:textColor="@color/primary_purple"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_alignParentEnd="true"
+                    android:src="@drawable/ic_bell" />
+            </RelativeLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="12dp"
+                android:background="#EDEDED" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_white"
+                android:padding="14dp"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_avatar_gradient">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="П"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:textSize="18sp" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Пётр Иванов"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="petr@example.com"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_white"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:text="8"
+                        android:textColor="@color/primary_purple"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:text="Подписок"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <Space android:layout_width="10dp" android:layout_height="1dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_white"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:text="6.8K"
+                        android:textColor="@color/primary_purple"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:text="В месяц"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <Space android:layout_width="10dp" android:layout_height="1dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_white"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:text="1.2K"
+                        android:textColor="#18A957"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:text="Экономия"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="НАСТРОЙКИ"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_white"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_personal"
+                    android:tag="Личная информация|Имя, email, телефон|@drawable/ic_user_circle|@drawable/ic_chevron_right"/>
+
+                <View style="@style/RowDivider"/>
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_notifications"
+                    android:tag="Уведомления|Настройка оповещений|@drawable/ic_bell_blue|@drawable/ic_chevron_right"/>
+
+                <View style="@style/RowDivider"/>
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_payments"
+                    android:tag="Способы оплаты|Карты и интеграции|@drawable/ic_card_green|@drawable/ic_chevron_right"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="ПРЕДПОЧТЕНИЯ"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_white"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_push"
+                    android:tag="Push-уведомления|О платежах и событиях|@drawable/ic_bell_orange|@drawable/ic_switch"/>
+
+                <View style="@style/RowDivider"/>
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_lang"
+                    android:tag="Язык и регион|Русский, Москва (GMT+3)|@drawable/ic_globe_purple|@drawable/ic_chevron_right"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="БЕЗОПАСНОСТЬ"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_white"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_security"
+                    android:tag="Пароль и безопасность|Смена пароля, 2FA|@drawable/ic_shield_red|@drawable/ic_chevron_right"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="ПРОЧЕЕ"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_white"
+                android:orientation="vertical">
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_help"
+                    android:tag="Помощь и поддержка|FAQ, контакты|@drawable/ic_help_blue|@drawable/ic_chevron_right"/>
+
+                <View style="@style/RowDivider"/>
+
+                <include layout="@layout/item_profile_row"
+                    android:id="@+id/row_export"
+                    android:tag="Экспорт данных|Скачать все данные|@drawable/ic_download_gray|@drawable/ic_chevron_right"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_logout"
+                android:padding="12dp"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_logout" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Выйти из аккаунта"
+                    android:textColor="#FF3B30"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="SubMonitor v1.0.0"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <View
+        android:id="@+id/bottom_nav_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#EDEDED"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:minHeight="72dp"
+        android:background="@android:color/white"
+        android:paddingTop="0dp"
+        android:clipToPadding="false"
+        android:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:labelVisibilityMode="labeled"
+        app:itemHorizontalTranslationEnabled="false"
+        app:itemIconSize="24dp"
+        app:itemTextAppearanceActive="@style/TextAppearance.CtrlS.BottomNav"
+        app:itemTextAppearanceInactive="@style/TextAppearance.CtrlS.BottomNav"
+        app:itemIconTint="@color/bottom_nav_selector"
+        app:itemTextColor="@color/bottom_nav_selector"
+        app:menu="@menu/bottom_nav_menu" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

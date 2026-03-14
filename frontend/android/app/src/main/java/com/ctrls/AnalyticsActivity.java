@@ -45,24 +45,28 @@ public class AnalyticsActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
+
             if (id == R.id.nav_subs) {
                 startActivity(new Intent(this, SubscriptionActivity.class));
                 finish();
                 return true;
             }
+
             if (id == R.id.nav_calendar) {
                 startActivity(new Intent(this, CalendarActivity.class));
                 finish();
                 return true;
             }
+
             if (id == R.id.nav_analytics) {
                 return true;
             }
-//            if (id == R.id.nav_profile) {
-//                startActivity(new Intent(this, ProfileActivity.class));
-//                finish();
-//                return true;
-//            }
+
+            if (id == R.id.nav_profile) {
+                startActivity(new Intent(this, ProfileActivity.class));
+                finish();
+                return true;
+            }
             return true;
         });
     }

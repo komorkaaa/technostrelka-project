@@ -62,7 +62,12 @@ public class MainPageActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
-            // Остальные пункты пока заглушки
+
+            if (id == R.id.nav_profile) {
+                startActivity(new Intent(this, ProfileActivity.class));
+                finish();
+                return true;
+            }
             return true;
         });
     }
