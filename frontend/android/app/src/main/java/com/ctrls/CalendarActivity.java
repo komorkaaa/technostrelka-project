@@ -46,19 +46,23 @@ public class CalendarActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
+
             if (id == R.id.nav_subs) {
                 startActivity(new Intent(this, SubscriptionActivity.class));
                 finish();
                 return true;
             }
+
             if (id == R.id.nav_calendar) {
                 return true;
             }
-//            if (id == R.id.nav_analytics) {
-//                startActivity(new Intent(this, AnalyticsActivity.class));
-//                finish();
-//                return true;
-//            }
+
+            if (id == R.id.nav_analytics) {
+                startActivity(new Intent(this, AnalyticsActivity.class));
+                finish();
+                return true;
+            }
+
 //            if (id == R.id.nav_profile) {
 //                startActivity(new Intent(this, ProfileActivity.class));
 //                finish();

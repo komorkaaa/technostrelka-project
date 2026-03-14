@@ -56,6 +56,12 @@ public class SubscriptionActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
+
+            if (id == R.id.nav_analytics) {
+                startActivity(new Intent(this, AnalyticsActivity.class));
+                finish();
+                return true;
+            }
             // Остальные пункты пока заглушки
             return true;
         });
