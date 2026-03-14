@@ -12,20 +12,18 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class MainPageActivity extends AppCompatActivity {
-
+public class AnalyticsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main_page);
+        setContentView(R.layout.activity_analytics);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_page_root), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.analytics_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
 
-            View content = findViewById(R.id.content_scroll);
+            View content = findViewById(R.id.analytics_scroll);
             if (content != null) {
                 content.setPadding(
                         content.getPaddingLeft(),
@@ -38,11 +36,13 @@ public class MainPageActivity extends AppCompatActivity {
         });
 
         BottomNavigationView nav = findViewById(R.id.bottom_nav);
-        nav.setSelectedItemId(R.id.nav_home);
+        nav.setSelectedItemId(R.id.nav_analytics);
 
         nav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
+                startActivity(new Intent(this, MainPageActivity.class));
+                finish();
                 return true;
             }
             if (id == R.id.nav_subs) {
@@ -50,19 +50,19 @@ public class MainPageActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
-
             if (id == R.id.nav_calendar) {
                 startActivity(new Intent(this, CalendarActivity.class));
                 finish();
                 return true;
             }
-
             if (id == R.id.nav_analytics) {
-                startActivity(new Intent(this, AnalyticsActivity.class));
-                finish();
                 return true;
             }
-            // Остальные пункты пока заглушки
+//            if (id == R.id.nav_profile) {
+//                startActivity(new Intent(this, ProfileActivity.class));
+//                finish();
+//                return true;
+//            }
             return true;
         });
     }
