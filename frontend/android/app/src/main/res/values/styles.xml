@@ -3,4 +3,14 @@
     <style name="TextAppearance.CtrlS.BottomNav" parent="@style/TextAppearance.Material3.LabelSmall">
         <item name="android:textSize">10sp</item>
     </style>
+    <style name="CalendarDay">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:background">@drawable/bg_calendar_day</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
 </resources>
