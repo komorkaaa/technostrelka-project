@@ -50,6 +50,12 @@ public class SubscriptionActivity extends AppCompatActivity {
             if (id == R.id.nav_subs) {
                 return true;
             }
+
+            if (id == R.id.nav_calendar) {
+                startActivity(new Intent(this, CalendarActivity.class));
+                finish();
+                return true;
+            }
             // Остальные пункты пока заглушки
             return true;
         });
