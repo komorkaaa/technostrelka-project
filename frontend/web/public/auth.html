@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CtrlS — Главная</title>
+  <title>CtrlS — Вход</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body data-page="index">
+<body>
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -17,90 +17,70 @@
         <span>Монитор подписок</span>
       </div>
       <nav class="nav">
-        <a class="active" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4V14H9v8H5a2 2 0 0 1-2-2z" stroke-width="2"/></svg>Главная</a>
+        <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4V14H9v8H5a2 2 0 0 1-2-2z" stroke-width="2"/></svg>Главная</a>
         <a href="/subscriptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2"/><path d="M3 10h18" stroke-width="2"/></svg>Подписки</a>
         <a href="/calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>Календарь</a>
         <a href="/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 20h18" stroke-width="2"/><path d="M7 20V10M12 20V4M17 20v-6" stroke-width="2"/></svg>Аналитика</a>
         <a href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2"/><path d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z" stroke-width="1.6"/></svg>Настройки</a>
       </nav>
-      <div class="cta">
-        <button class="button-primary" onclick="location.href='/auth'">Войти</button>
-      </div>
+      <div class="cta"><button class="button-primary" onclick="location.href='/auth'">Вход</button></div>
     </aside>
 
     <div class="main">
       <div class="topbar">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16"><circle cx="11" cy="11" r="7" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke-width="2"/></svg>
-          <input type="text" placeholder="Поиск подписок..." />
+          <input type="text" placeholder="Поиск подписок..." disabled />
         </div>
         <div class="top-actions">
-          <div class="badge">🔔<span>3</span></div>
-          <div class="avatar">П</div>
+          <div class="badge">🔔<span>0</span></div>
+          <div class="avatar">Г</div>
         </div>
       </div>
 
       <div class="content">
         <div class="page-title">
-          <h2>Главная</h2>
-          <p>Обзор ваших подписок и расходов</p>
-        </div>
-
-        <div class="cards">
-          <div class="card emphasis">
-            <h3>Всего в месяц</h3>
-            <div class="value" id="kpiMonthly">—</div>
-            <div class="hint">Обновляется из API</div>
-          </div>
-          <div class="card">
-            <h3>Активных подписок</h3>
-            <div class="value" id="kpiActive">—</div>
-            <div class="hint">По данным API</div>
-          </div>
-          <div class="card">
-            <h3>Следующий платёж</h3>
-            <div class="value" id="kpiNext">—</div>
-            <div class="hint">Ближайшее списание</div>
-          </div>
-          <div class="card">
-            <h3>Экономия</h3>
-            <div class="value" id="kpiSavings" style="color: var(--green);">—</div>
-            <div class="hint">Пока 0</div>
-          </div>
+          <h2>Вход и регистрация</h2>
+          <p>Создай аккаунт или войди, чтобы работать с данными</p>
         </div>
 
         <div class="card-grid">
           <div class="panel">
-            <div class="panel-header">
-              <div>
-                <h4>Динамика расходов</h4>
-                <small>Заглушка графика</small>
+            <div class="panel-header"><h4>Регистрация</h4></div>
+            <form id="registerForm" class="settings-form">
+              <div><label>Email</label><input id="regEmail" type="email" required /></div>
+              <div><label>Пароль</label><input id="regPassword" type="password" minlength="6" required /></div>
+              <div class="toolbar">
+                <button class="pill active" type="submit">Зарегистрироваться</button>
               </div>
-              <button class="pill">Подробнее</button>
-            </div>
-            <div class="chart">График расходов</div>
+              <div id="regStatus" class="hint"></div>
+            </form>
           </div>
 
           <div class="panel">
-            <div class="panel-header">
-              <h4>Ближайшие платежи</h4>
-              <span>🕒</span>
-            </div>
-            <div class="list" id="upcomingList"></div>
+            <div class="panel-header"><h4>Вход</h4></div>
+            <form id="loginForm" class="settings-form">
+              <div><label>Email</label><input id="loginEmail" type="email" required /></div>
+              <div><label>Пароль</label><input id="loginPassword" type="password" required /></div>
+              <div class="toolbar">
+                <button class="pill active" type="submit">Войти</button>
+              </div>
+              <div id="loginStatus" class="hint"></div>
+            </form>
           </div>
         </div>
 
         <div class="notice">
           <div class="left">
-            <span>⚠️</span>
-            <span>Следи за предстоящими списаниями</span>
+            <span>Важно</span>
+            <span>Токен сохраняется в localStorage как "token"</span>
           </div>
-          <button class="pill">Просмотр</button>
+          <button class="pill" id="logoutBtn">Выйти</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="/auth.js"></script>
 </body>
 </html>
