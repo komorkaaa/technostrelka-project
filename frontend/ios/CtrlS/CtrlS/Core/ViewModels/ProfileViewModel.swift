@@ -52,6 +52,35 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
+    func updateProfile(email: String?, phone: String?) async -> Bool {
+        do {
+            errorMessage = nil
+            let updated = try await service.updateProfile(ProfileUpdatePayload(email: email, phone: phone))
+            profile = updated
+            return true
+        } catch let apiError as APIError {
+            errorMessage = apiError.message
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func changePassword(current: String, new: String) async -> Bool {
+        do {
+            errorMessage = nil
+            try await service.changePassword(PasswordChangePayload(currentPassword: current, newPassword: new))
+            return true
+        } catch let apiError as APIError {
+            errorMessage = apiError.message
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     private func formatAmount(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal

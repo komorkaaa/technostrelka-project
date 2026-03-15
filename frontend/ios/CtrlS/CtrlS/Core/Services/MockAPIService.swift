@@ -203,6 +203,12 @@ final class MockAPIService: APIService {
         return EmailImportResult(parsed: parsed, created: 2)
     }
 
+    func updateProfile(_ payload: ProfileUpdatePayload) async throws -> UserProfile {
+        UserProfile(id: 1, email: payload.email ?? "petr@example.com", phone: payload.phone)
+    }
+
+    func changePassword(_ payload: PasswordChangePayload) async throws {}
+
     func createSubscription(_ payload: SubscriptionPayload) async throws -> Subscription {
         Subscription(
             id: 999,
