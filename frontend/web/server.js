@@ -10,12 +10,14 @@ const port = process.env.PORT || 3000;
 const backendBaseUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
 const routeMap = {
-  "/": "/index.html",
+  "/": "/login.html",
+  "/login": "/login.html",
+  "/register": "/register.html",
+  "/home": "/index.html",
   "/subscriptions": "/subscriptions.html",
   "/calendar": "/calendar.html",
   "/analytics": "/analytics.html",
-  "/settings": "/settings.html",
-  "/auth": "/auth.html"
+  "/settings": "/settings.html"
 };
 
 const mimeTypes = {

@@ -23,7 +23,9 @@
         <a href="/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 20h18" stroke-width="2"/><path d="M7 20V10M12 20V4M17 20v-6" stroke-width="2"/></svg>Аналитика</a>
         <a href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2"/><path d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z" stroke-width="1.6"/></svg>Настройки</a>
       </nav>
-      <div class="cta"><button class="button-primary" onclick="location.href='/auth'">Вход</button></div>
+      <div class="cta">
+  <button class="button-primary" onclick="location.href='/subscriptions'">+ Добавить подписку</button>
+</div>
     </aside>
 
     <div class="main">
@@ -34,7 +36,7 @@
         </div>
         <div class="top-actions">
           <div class="badge">🔔<span>0</span></div>
-          <div class="avatar">Г</div>
+          <a class="avatar" href="/login" title="Войти">П</a>
         </div>
       </div>
 
