@@ -14,7 +14,7 @@ final class MockAPIService: APIService {
         )
     }
 
-    func fetchUpcomingPayments() async throws -> [PaymentRowModel] {
+    func fetchUpcomingPayments(days: Int) async throws -> [PaymentRowModel] {
         [
             PaymentRowModel(title: "Notion", subtitle: "Через 1 дн.", amount: "8 $", colorName: "black"),
             PaymentRowModel(title: "Spotify", subtitle: "Через 2 дн.", amount: "169 ₽", colorName: "green"),
@@ -35,46 +35,76 @@ final class MockAPIService: APIService {
     func fetchSubscriptions(query: String?, status: SubscriptionStatus?) async throws -> [Subscription] {
         let all: [Subscription] = [
             Subscription(
-                title: "Яндекс Плюс",
-                subtitle: "Подписка на Яндекс Плюс с доступом к...",
-                price: "399 ₽ / в месяц",
+                id: 1,
+                name: "Яндекс Плюс",
+                category: "Стриминг",
+                billingPeriod: "monthly",
+                amount: 399,
+                currency: "RUB",
+                nextBillingDate: "2026-03-20",
                 status: .active,
-                date: "20 мар."
+                formattedPrice: "399 ₽ / monthly",
+                formattedDate: "20 мар."
             ),
             Subscription(
-                title: "Spotify",
-                subtitle: "Премиум подписка на музыкальный сервис",
-                price: "169 ₽ / в месяц",
+                id: 2,
+                name: "Spotify",
+                category: "Музыка",
+                billingPeriod: "monthly",
+                amount: 169,
+                currency: "RUB",
+                nextBillingDate: "2026-03-15",
                 status: .active,
-                date: "15 мар."
+                formattedPrice: "169 ₽ / monthly",
+                formattedDate: "15 мар."
             ),
             Subscription(
-                title: "Adobe Creative Cloud",
-                subtitle: "Полный пакет приложений Adobe",
-                price: "3 499 ₽ / в месяц",
+                id: 3,
+                name: "Adobe Creative Cloud",
+                category: "ПО",
+                billingPeriod: "monthly",
+                amount: 3499,
+                currency: "RUB",
+                nextBillingDate: "2026-03-25",
                 status: .active,
-                date: "25 мар."
+                formattedPrice: "3 499 ₽ / monthly",
+                formattedDate: "25 мар."
             ),
             Subscription(
-                title: "Okko",
-                subtitle: "Онлайн‑кинотеатр",
-                price: "599 ₽ / в месяц",
+                id: 4,
+                name: "Okko",
+                category: "Кино",
+                billingPeriod: "monthly",
+                amount: 599,
+                currency: "RUB",
+                nextBillingDate: "2026-03-18",
                 status: .active,
-                date: "18 мар."
+                formattedPrice: "599 ₽ / monthly",
+                formattedDate: "18 мар."
             ),
             Subscription(
-                title: "Notion",
-                subtitle: "Сервис для организации работы",
-                price: "8 $ / в месяц",
+                id: 5,
+                name: "Notion",
+                category: "Работа",
+                billingPeriod: "monthly",
+                amount: 8,
+                currency: "USD",
+                nextBillingDate: "2026-03-12",
                 status: .active,
-                date: "12 мар."
+                formattedPrice: "8 $ / monthly",
+                formattedDate: "12 мар."
             ),
             Subscription(
-                title: "Readymag",
-                subtitle: "Конструктор сайтов",
-                price: "16 $ / в месяц",
+                id: 6,
+                name: "Readymag",
+                category: "Дизайн",
+                billingPeriod: "monthly",
+                amount: 16,
+                currency: "USD",
+                nextBillingDate: "2026-03-28",
                 status: .paused,
-                date: "28 мар."
+                formattedPrice: "16 $ / monthly",
+                formattedDate: "28 мар."
             )
         ]
 
@@ -140,4 +170,48 @@ final class MockAPIService: APIService {
             categories: categories
         )
     }
+
+    func fetchAnalyticsTotals() async throws -> AnalyticsTotals {
+        AnalyticsTotals(month: 6286, halfYear: 37716, year: 75432)
+    }
+
+    func fetchForecast() async throws -> ForecastSummary {
+        ForecastSummary(month: "6 045 ₽", halfYear: "36 270 ₽", year: "72 540 ₽")
+    }
+
+    func fetchProfile() async throws -> UserProfile {
+        UserProfile(id: 1, email: "petr@example.com", phone: "+7 900 000 00 00")
+    }
+
+    func createSubscription(_ payload: SubscriptionPayload) async throws -> Subscription {
+        Subscription(
+            id: 999,
+            name: payload.name,
+            category: payload.category,
+            billingPeriod: payload.billingPeriod,
+            amount: payload.amount,
+            currency: payload.currency,
+            nextBillingDate: nil,
+            status: .active,
+            formattedPrice: "\(payload.amount) \(payload.currency) / \(payload.billingPeriod)",
+            formattedDate: "—"
+        )
+    }
+
+    func updateSubscription(id: Int, payload: SubscriptionPayload) async throws -> Subscription {
+        Subscription(
+            id: id,
+            name: payload.name,
+            category: payload.category,
+            billingPeriod: payload.billingPeriod,
+            amount: payload.amount,
+            currency: payload.currency,
+            nextBillingDate: nil,
+            status: .active,
+            formattedPrice: "\(payload.amount) \(payload.currency) / \(payload.billingPeriod)",
+            formattedDate: "—"
+        )
+    }
+
+    func deleteSubscription(id: Int) async throws {}
 }

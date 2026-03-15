@@ -2,10 +2,9 @@ import Foundation
 import Combine
 
 @MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var summary: HomeSummary?
+final class CalendarViewModel: ObservableObject {
+    @Published var forecast: ForecastSummary?
     @Published var upcomingPayments: [PaymentRowModel] = []
-    @Published var categories: [CategoryChipModel] = []
     @Published var errorMessage: String?
 
     private let service: APIService
@@ -17,19 +16,18 @@ final class HomeViewModel: ObservableObject {
     func load() async {
         do {
             errorMessage = nil
-            summary = try await service.fetchHomeSummary()
-            upcomingPayments = try await service.fetchUpcomingPayments(days: 30)
-            categories = try await service.fetchCategories()
+            async let forecastValue = service.fetchForecast()
+            async let paymentsValue = service.fetchUpcomingPayments(days: 7)
+            forecast = try await forecastValue
+            upcomingPayments = try await paymentsValue
         } catch let apiError as APIError {
             errorMessage = apiError.message
-            summary = nil
+            forecast = nil
             upcomingPayments = []
-            categories = []
         } catch {
             errorMessage = error.localizedDescription
-            summary = nil
+            forecast = nil
             upcomingPayments = []
-            categories = []
         }
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
+    @State private var isCreatePresented = false
     @State private var activeSheet: SheetDestination?
     @StateObject private var viewModel = HomeViewModel(service: RealAPIService.shared)
 
@@ -30,6 +31,12 @@ struct HomeView: View {
             .navigationTitle("Главная")
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(isPresented: $isCreatePresented) {
+                SubscriptionFormView(mode: .create) { payload in
+                    _ = try await RealAPIService.shared.createSubscription(payload)
+                    await viewModel.load()
+                }
             }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
@@ -81,7 +88,7 @@ private extension HomeView {
             }
             .padding(DS.Spacing.lg)
 
-            Button(action: {}) {
+            Button(action: { isCreatePresented = true }) {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
@@ -91,9 +98,6 @@ private extension HomeView {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .padding(DS.Spacing.lg)
-            .onTapGesture {
-                activeSheet = SheetDestination(title: "Добавить подписку")
-            }
         }
         .frame(maxWidth: .infinity, minHeight: 180)
     }

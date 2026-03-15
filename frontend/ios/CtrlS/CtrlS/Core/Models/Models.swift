@@ -29,12 +29,21 @@ enum SubscriptionStatus: String {
 }
 
 struct Subscription: Identifiable {
-    let id = UUID()
-    let title: String
-    let subtitle: String
-    let price: String
+    let id: Int
+    let name: String
+    let category: String?
+    let billingPeriod: String
+    let amount: Double
+    let currency: String
+    let nextBillingDate: String?
     let status: SubscriptionStatus
-    let date: String
+    let formattedPrice: String
+    let formattedDate: String
+
+    var title: String { name }
+    var subtitle: String { category ?? billingPeriod }
+    var price: String { formattedPrice }
+    var date: String { formattedDate }
 }
 
 struct NotificationItem: Identifiable {
@@ -78,4 +87,31 @@ struct AnalyticsOverview {
     let chartMin: String
     let chartMax: String
     let categories: [AnalyticsCategoryBreakdown]
+}
+
+struct AnalyticsTotals {
+    let month: Double
+    let halfYear: Double
+    let year: Double
+}
+
+struct ForecastSummary {
+    let month: String
+    let halfYear: String
+    let year: String
+}
+
+struct UserProfile {
+    let id: Int
+    let email: String
+    let phone: String?
+}
+
+struct SubscriptionPayload {
+    let name: String
+    let amount: Double
+    let currency: String
+    let billingPeriod: String
+    let category: String?
+    let nextBillingDate: Date?
 }
