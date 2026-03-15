@@ -286,13 +286,16 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/logout_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_logout"
                 android:padding="12dp"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
                     android:layout_width="16dp"
