@@ -183,6 +183,26 @@ final class MockAPIService: APIService {
         UserProfile(id: 1, email: "petr@example.com", phone: "+7 900 000 00 00")
     }
 
+    func importSubscriptionsFromEmail(_ request: EmailImportRequest) async throws -> EmailImportResult {
+        let parsed = [
+            EmailParsedSubscription(
+                service: "Netflix",
+                amount: "399.00",
+                currency: "RUB",
+                sender: "billing@netflix.com",
+                subject: "Your Netflix receipt"
+            ),
+            EmailParsedSubscription(
+                service: "Spotify",
+                amount: "549.00",
+                currency: "RUB",
+                sender: "billing@spotify.com",
+                subject: "Spotify Premium payment"
+            )
+        ]
+        return EmailImportResult(parsed: parsed, created: 2)
+    }
+
     func createSubscription(_ payload: SubscriptionPayload) async throws -> Subscription {
         Subscription(
             id: 999,
