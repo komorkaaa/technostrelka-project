@@ -17,7 +17,7 @@ struct CalendarView: View {
                             .font(DS.Typography.caption)
                             .foregroundStyle(.red)
                     }
-                    upcomingSection
+                    dayPaymentsSection
                 }
                 .padding(.horizontal, DS.Spacing.md)
                 .padding(.top, DS.Spacing.lg)
@@ -64,10 +64,10 @@ private extension CalendarView {
                 Text("Всего в этом месяце")
                     .font(DS.Typography.body)
                     .foregroundStyle(.white.opacity(0.9))
-                Text(viewModel.forecast?.month ?? "—")
+                Text(formatAmount(viewModel.totalAmount(in: viewModel.currentMonthDate())))
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
-                Text("\(viewModel.upcomingPayments.count) платежей")
+                Text("\(viewModel.count(in: viewModel.currentMonthDate())) платежей")
                     .font(DS.Typography.caption)
                     .foregroundStyle(.white.opacity(0.8))
             }
@@ -80,15 +80,29 @@ private extension CalendarView {
     var calendarCard: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             HStack {
-                Text(currentMonthTitle())
+                Text(monthTitle(for: viewModel.currentMonthDate()))
                     .font(DS.Typography.headline)
                 Spacer()
+                Button("Сегодня") {
+                    viewModel.setMonthOffset(0)
+                    viewModel.selectedDate = Date()
+                }
+                .font(DS.Typography.caption)
+                .foregroundStyle(DS.ColorToken.accent)
                 HStack(spacing: 8) {
-                    navButton(system: "chevron.left", title: "Предыдущий месяц")
-                    navButton(system: "chevron.right", title: "Следующий месяц")
+                    navButton(system: "chevron.left", title: "Предыдущий месяц", action: {
+                        viewModel.setMonthOffset(viewModel.monthOffset - 1)
+                    })
+                    navButton(system: "chevron.right", title: "Следующий месяц", action: {
+                        viewModel.setMonthOffset(viewModel.monthOffset + 1)
+                    })
                 }
             }
-            CalendarGrid()
+            CalendarGrid(
+                days: viewModel.daysForMonth(),
+                selectedDate: viewModel.selectedDate,
+                onSelect: { date in viewModel.selectedDate = date }
+            )
         }
         .padding(DS.Spacing.md)
         .background(DS.ColorToken.cardBackground)
@@ -99,26 +113,32 @@ private extension CalendarView {
         )
     }
 
-    var upcomingSection: some View {
+    var dayPaymentsSection: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
-            Text("Ближайшие 7 дней")
+            Text("Платежи на \(dayTitle(for: viewModel.selectedDate))")
                 .font(DS.Typography.headline)
             VStack(spacing: DS.Spacing.sm) {
-                if viewModel.upcomingPayments.isEmpty {
-                    Text("Нет ближайших списаний")
+                let payments = viewModel.payments(on: viewModel.selectedDate)
+                if payments.isEmpty {
+                    Text("Нет списаний на выбранную дату")
                         .font(DS.Typography.caption)
                         .foregroundStyle(DS.ColorToken.textSecondary)
                 }
-                ForEach(viewModel.upcomingPayments) { payment in
-                    PaymentRow(title: payment.title, subtitle: payment.subtitle, amount: payment.amount, color: color(from: payment.colorName))
-                        .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
+                ForEach(payments) { payment in
+                    PaymentRow(
+                        title: payment.title,
+                        subtitle: payment.subtitle,
+                        amount: payment.price,
+                        color: color(from: payment.status == .paused ? "orange" : "purple")
+                    )
+                    .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
                 }
             }
         }
     }
 
-    func navButton(system: String, title: String) -> some View {
-        Button(action: { activeSheet = SheetDestination(title: title) }) {
+    func navButton(system: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Image(systemName: system)
                 .font(.system(size: 12, weight: .bold))
                 .frame(width: 28, height: 28)
@@ -127,11 +147,18 @@ private extension CalendarView {
         }
     }
 
-    func currentMonthTitle() -> String {
+    func monthTitle(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
         formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: Date()).capitalized
+        return formatter.string(from: date).capitalized
+    }
+
+    func dayTitle(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "d MMMM"
+        return formatter.string(from: date)
     }
 
     func color(from name: String) -> Color {
@@ -145,6 +172,15 @@ private extension CalendarView {
         default: return .gray
         }
     }
+
+    func formatAmount(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.locale = Locale(identifier: "ru_RU")
+        let base = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return "\(base) ₽"
+    }
 }
 
 private struct SheetDestination: Identifiable {
@@ -154,7 +190,9 @@ private struct SheetDestination: Identifiable {
 
 private struct CalendarGrid: View {
     private let weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-    private let days = Array(1...31)
+    let days: [CalendarDay]
+    let selectedDate: Date
+    let onSelect: (Date) -> Void
 
     var body: some View {
         VStack(spacing: 8) {
@@ -168,20 +206,44 @@ private struct CalendarGrid: View {
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
-                ForEach(0..<2, id: \.self) { _ in
-                    Color.clear
-                        .frame(height: 28)
-                }
-                ForEach(days, id: \.self) { day in
-                    Text("\(day)")
-                        .font(DS.Typography.caption)
-                        .foregroundStyle(DS.ColorToken.textPrimary)
-                        .frame(maxWidth: .infinity, minHeight: 28)
-                        .background(day == 13 ? DS.ColorToken.accent.opacity(0.2) : DS.ColorToken.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                ForEach(days) { day in
+                    CalendarDayCell(
+                        day: day,
+                        isSelected: Calendar.current.isDate(day.date, inSameDayAs: selectedDate),
+                        onSelect: onSelect
+                    )
                 }
             }
         }
+    }
+}
+
+private struct CalendarDayCell: View {
+    let day: CalendarDay
+    let isSelected: Bool
+    let onSelect: (Date) -> Void
+
+    var body: some View {
+        Button(action: { onSelect(day.date) }) {
+            VStack(spacing: 4) {
+                Text("\(Calendar.current.component(.day, from: day.date))")
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(day.isInMonth ? DS.ColorToken.textPrimary : DS.ColorToken.textSecondary)
+                if day.paymentsCount > 0 {
+                    Circle()
+                        .fill(DS.ColorToken.accent)
+                        .frame(width: 6, height: 6)
+                } else {
+                    Circle()
+                        .fill(Color.clear)
+                        .frame(width: 6, height: 6)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 32)
+            .background(isSelected ? DS.ColorToken.accent.opacity(0.2) : DS.ColorToken.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 

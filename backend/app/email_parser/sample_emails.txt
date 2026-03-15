@@ -4,7 +4,7 @@ From: billing@netflix.com
 Thank you for your payment.
 
 Service: Netflix
-Amount: $9.99
+Amount: RUB 899.00
 Billing period: monthly
 ---
 Subject: Spotify payment confirmation
@@ -12,4 +12,4 @@ From: receipts@spotify.com
 
 We received your payment.
 
-Total: EUR 5.00
+Total: RUB 1099.00
