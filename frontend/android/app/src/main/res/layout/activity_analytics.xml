@@ -37,7 +37,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Аналитика"
-                    android:textColor="@color/primary_purple"
+                    android:textColor="@color/text_primary"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -49,32 +49,88 @@
                     android:foreground="?attr/selectableItemBackgroundBorderless">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_bell" />
-
-                    <TextView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="end|top"
-                        android:background="@drawable/bg_badge_red"
-                        android:gravity="center"
-                        android:text="3"
-                        android:textColor="@android:color/white"
-                        android:textSize="10sp" />
                 </FrameLayout>
             </RelativeLayout>
 
-            <View
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/analytics_period_toggle"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginBottom="12dp"
-                android:background="#EDEDED" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/analytics_period_month"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Месяц"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/analytics_period_half_year"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Полгода"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/analytics_period_year"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Год"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/category_selector"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_search"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/analytics_category_value"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Все категории"
+                    android:textColor="@color/text_secondary" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:rotation="90"
+                    android:src="@drawable/ic_chevron_right" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -105,10 +161,11 @@
                         android:textColor="@color/text_secondary" />
 
                     <TextView
+                        android:id="@+id/avg_spend_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="6 286 ₽"
+                        android:text="—"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
                 </LinearLayout>
@@ -143,12 +200,13 @@
                         android:textColor="@color/text_secondary" />
 
                     <TextView
+                        android:id="@+id/trend_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="-4.4%"
+                        android:text="—"
                         android:textStyle="bold"
-                        android:textColor="#18A957" />
+                        android:textColor="@color/text_primary" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -174,7 +232,7 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_trend" />
+                            android:src="@drawable/ic_leaf" />
                     </FrameLayout>
 
                     <TextView
@@ -186,12 +244,13 @@
                         android:textColor="@color/text_secondary" />
 
                     <TextView
+                        android:id="@+id/savings_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="1 240 ₽"
+                        android:text="—"
                         android:textStyle="bold"
-                        android:textColor="#18A957" />
+                        android:textColor="@color/text_primary" />
                 </LinearLayout>
 
                 <Space android:layout_width="12dp" android:layout_height="1dp"/>
@@ -224,56 +283,25 @@
                         android:textColor="@color/text_secondary" />
 
                     <TextView
+                        android:id="@+id/efficiency_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="87%"
+                        android:text="—"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
                 </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/analytics_error"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:background="@drawable/bg_chip_active"
-                    android:gravity="center"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="Обзор"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="Тренды"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="Категории"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                android:layout_marginTop="10dp"
+                android:text="Could not connect to the server."
+                android:textColor="#E74C3C"
+                android:textSize="12sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -290,16 +318,16 @@
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
-                <ImageView
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/analytics_line_chart"
                     android:layout_width="match_parent"
-                    android:layout_height="160dp"
-                    android:layout_marginTop="8dp"/>
-<!--                    android:src="@drawable/placeholder_line_chart" -->
+                    android:layout_height="180dp"
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal">
 
                     <LinearLayout
@@ -319,7 +347,8 @@
                             android:layout_height="wrap_content"/>
 
                         <TextView
-                            android:text="4 850 ₽"
+                            android:id="@+id/analytics_min_value"
+                            android:text="—"
                             android:textStyle="bold"
                             android:textColor="@color/primary_purple"
                             android:layout_width="wrap_content"
@@ -345,7 +374,8 @@
                             android:layout_height="wrap_content"/>
 
                         <TextView
-                            android:text="7 150 ₽"
+                            android:id="@+id/analytics_max_value"
+                            android:text="—"
                             android:textStyle="bold"
                             android:textColor="@color/primary_purple"
                             android:layout_width="wrap_content"
@@ -369,59 +399,58 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
-                <ImageView
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/analytics_pie_chart"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
-                    android:layout_marginTop="8dp"/>
-<!--                    android:src="@drawable/placeholder_pie_chart" -->
-
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
+                    android:id="@+id/analytics_category_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:orientation="vertical">
+                    android:orientation="vertical" />
+            </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-                        <View android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/bg_dot_purple"/>
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Стриминг" android:textSize="12sp" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="998 ₽" android:textStyle="bold"/>
-                    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card_green"
+                android:padding="12dp"
+                android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-                        <View android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/bg_dot_pink"/>
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Музыка" android:textSize="12sp" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="169 ₽" android:textStyle="bold"/>
-                    </LinearLayout>
+                <TextView
+                    android:text="Рекомендации по экономии"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-                        <View android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/bg_dot_orange"/>
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="ПО" android:textSize="12sp" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="4 579 ₽" android:textStyle="bold"/>
-                    </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="• Годовая оплата Adobe CC — экономия до 20%"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-                        <View android:layout_width="8dp" android:layout_height="8dp" android:background="@drawable/bg_dot_green"/>
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Образование" android:textSize="12sp" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="299 ₽" android:textStyle="bold"/>
-                    </LinearLayout>
-                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="• Семейная подписка Spotify вместо индивидуальной"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="• Объедините Яндекс Плюс и Okko в один пакет"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
 
         </LinearLayout>
