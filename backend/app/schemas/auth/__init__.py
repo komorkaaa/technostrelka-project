@@ -23,9 +23,19 @@ class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=30)
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=6, max_length=72)
+    new_password: str = Field(min_length=6, max_length=72)
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
 
-__all__ = ["UserCreate", "UserOut", "Token"]
+__all__ = ["UserCreate", "UserOut", "UserUpdate", "PasswordChange", "Token"]
