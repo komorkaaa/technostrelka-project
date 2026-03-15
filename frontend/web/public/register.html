@@ -8,23 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
-  <style>
-    body { display: grid; place-items: center; min-height: 100vh; }
-    .auth-wrap { width: min(420px, 92vw); }
-    .auth-card {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 28px;
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 18px;
-    }
-    .auth-title { margin: 0; font-size: 28px; }
-    .auth-sub { margin: 0; color: var(--muted); }
-  </style>
 </head>
-<body>
+<body class="auth-page">
   <div class="auth-wrap">
     <div class="brand" style="margin-bottom:16px;">
       <h1>CtrlS</h1>
@@ -33,8 +18,8 @@
 
     <div class="auth-card">
       <div>
-        <h2 class="auth-title">Регистрация</h2>
-        <p class="auth-sub">Создай аккаунт за минуту</p>
+        <h2>Регистрация</h2>
+        <p>Создай аккаунт за минуту</p>
       </div>
 
       <form id="registerForm" class="settings-form">

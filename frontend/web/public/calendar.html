@@ -24,8 +24,8 @@
         <a href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2"/><path d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z" stroke-width="1.6"/></svg>Настройки</a>
       </nav>
       <div class="cta">
-  <button class="button-primary" onclick="location.href='/subscriptions'">+ Добавить подписку</button>
-</div>
+        <button class="button-primary" id="openAddSubscription">+ Добавить подписку</button>
+      </div>
     </aside>
 
     <div class="main">
@@ -35,36 +35,58 @@
           <input type="text" placeholder="Поиск подписок..." />
         </div>
         <div class="top-actions">
-          <div class="badge">🔔<span>3</span></div>
-          <a class="avatar" href="/login" title="Войти">П</a>
+          <div class="badge" id="notifBadge">🔔<span>0</span></div>
+          <a class="avatar" href="/settings" title="Профиль">П</a>
         </div>
       </div>
 
       <div class="content">
         <div class="page-title">
           <h2>Календарь платежей</h2>
-          <p>Планирование и отслеживание предстоящих списаний</p>
+          <p>Отмеченные даты списаний</p>
         </div>
 
-        <div class="cards">
-          <div class="card"><h3>Всего в этом месяце</h3><div class="value" id="calMonthly">—</div></div>
-          <div class="card"><h3>Платежей в этом месяце</h3><div class="value" id="calCount">—</div></div>
-          <div class="card"><h3>Ближайший платёж</h3><div class="value" id="calNext">—</div></div>
-        </div>
-
-        <div class="card-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <div><h4>Календарь</h4><small>Заглушка</small></div>
-            </div>
-            <div class="chart">Календарная сетка</div>
+        <div class="panel">
+          <div class="calendar-header">
+            <h4 id="calendarMonth">—</h4>
           </div>
-
-          <div class="panel">
-            <div class="panel-header"><h4>Ближайшие 7 дней</h4></div>
-            <div class="list" id="calendarUpcoming"></div>
-          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
         </div>
+
+        <div class="panel">
+          <div class="panel-header"><h4>Ближайшие 7 дней</h4></div>
+          <div class="list" id="calendarUpcoming"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop"></div>
+  <div id="subscriptionModal" class="modal">
+    <div class="modal-card">
+      <div class="panel-header">
+        <h4>Подписка</h4>
+        <button class="pill" id="closeModal">Закрыть</button>
+      </div>
+      <div class="settings-form">
+        <div><label>Название</label><input id="subName" type="text" /></div>
+        <div class="row">
+          <div><label>Сумма</label><input id="subAmount" type="number" step="0.01" /></div>
+          <div><label>Валюта</label><input id="subCurrency" type="text" value="RUB" /></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Период</label>
+            <select id="subPeriod">
+              <option value="monthly">Ежемесячно</option>
+              <option value="weekly">Еженедельно</option>
+              <option value="yearly">Ежегодно</option>
+            </select>
+          </div>
+          <div><label>Категория</label><input id="subCategory" type="text" /></div>
+        </div>
+        <div><label>Следующая дата списания</label><input id="subNextDate" type="date" /></div>
+        <button class="button-primary" id="saveSubscription">Сохранить</button>
       </div>
     </div>
   </div>
