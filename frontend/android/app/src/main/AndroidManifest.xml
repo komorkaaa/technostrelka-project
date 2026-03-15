@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CtrlS">
         <activity
+            android:name=".AuthActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProfileActivity"
             android:exported="false" />
         <activity

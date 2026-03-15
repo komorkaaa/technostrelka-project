@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">CtrlS</string>
+    <string name="app_name">SubMonitor</string>
+    <string name="auth_title">Авторизация</string>
+    <string name="auth_subtitle">Добро пожаловать</string>
+    <string name="auth_tab_login">Вход</string>
+    <string name="auth_tab_register">Регистрация</string>
+    <string name="auth_hint_email">Email</string>
+    <string name="auth_hint_password">Пароль</string>
+    <string name="auth_hint_phone">Телефон (необязательно)</string>
+    <string name="auth_action_login">Войти</string>
+    <string name="auth_action_register">Зарегистрироваться</string>
 </resources>

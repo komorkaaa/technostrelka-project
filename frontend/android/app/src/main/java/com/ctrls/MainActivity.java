@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            startActivity(new Intent(this, MainPageActivity.class));
+            startActivity(new Intent(this, AuthActivity.class));
             finish();
         }, SPLASH_DURATION_MS);
     }

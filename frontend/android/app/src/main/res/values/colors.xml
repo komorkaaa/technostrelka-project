@@ -12,9 +12,16 @@
     <color name="surface_white">#FFFFFF</color>
     <color name="surface_border">#EDEDED</color>
 
+    <color name="auth_primary_purple">#A04AF7</color>
+    <color name="auth_toggle_bg">#F2F2F2</color>
+    <color name="auth_input_border">#F0F0F0</color>
+    <color name="auth_hint">#C7C7C7</color>
+
     <color name="warn_bg">#FFF3E6</color>
     <color name="warn_border">#FFD6B0</color>
 
     <color name="bottom_nav_active">#9D1AF4</color>
     <color name="bottom_nav_inactive">#9A9AA0</color>
+
+    <color name="auth_primary_purple_disabled">#CDB7F7</color>
 </resources>
