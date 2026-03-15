@@ -2,6 +2,7 @@ package com.ctrls;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.activity.EdgeToEdge;
@@ -12,7 +13,53 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import android.content.SharedPreferences;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.CheckBox;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.ctrls.api.ApiClient;
+import com.ctrls.api.SubscriptionsApi;
+import com.ctrls.api.dto.SubscriptionOut;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SubscriptionActivity extends AppCompatActivity {
+
+    private static final String PREFS = "auth_prefs";
+    private static final String KEY_TOKEN = "access_token";
+
+    private SubscriptionsApi subscriptionsApi;
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat viewDate = new SimpleDateFormat("d MMM", new Locale("ru", "RU"));
+
+    private final List<SubscriptionOut> allSubs = new ArrayList<>();
+    private final List<SubscriptionOut> filteredSubs = new ArrayList<>();
+
+    private String searchQuery = "";
+    private int currentTab = 0;
+
+    private final Set<String> categoryFilter = new HashSet<>();
+    private final Set<String> periodFilter = new HashSet<>();
+    private Double minPrice = null;
+    private Double maxPrice = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +83,26 @@ public class SubscriptionActivity extends AppCompatActivity {
             }
             return insets;
         });
+
+        subscriptionsApi = ApiClient.getRetrofit().create(SubscriptionsApi.class);
+
+        EditText search = findViewById(R.id.search_input);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                searchQuery = s.toString().trim().toLowerCase();
+                applyFilters();
+            }
+        });
+
+        findViewById(R.id.filter_button).setOnClickListener(v -> openFiltersDialog());
+
+        findViewById(R.id.chip_all).setOnClickListener(v -> setTab(0));
+        findViewById(R.id.chip_active).setOnClickListener(v -> setTab(1));
+        findViewById(R.id.chip_paused).setOnClickListener(v -> setTab(2));
+
+        loadSubscriptions();
 
         BottomNavigationView nav = findViewById(R.id.bottom_nav);
         nav.setSelectedItemId(R.id.nav_subs);
@@ -71,4 +138,227 @@ public class SubscriptionActivity extends AppCompatActivity {
             return true;
         });
     }
+
+    private void loadSubscriptions() {
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String token = prefs.getString(KEY_TOKEN, null);
+        if (token == null || token.isEmpty()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
+
+        subscriptionsApi.list("Bearer " + token).enqueue(new Callback<List<SubscriptionOut>>() {
+            @Override
+            public void onResponse(Call<List<SubscriptionOut>> call, Response<List<SubscriptionOut>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allSubs.clear();
+                    allSubs.addAll(response.body());
+                    updateChips();
+                    applyFilters();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<SubscriptionOut>> call, Throwable t) { }
+        });
+    }
+
+    private void setTab(int tab) {
+        currentTab = tab;
+        updateChips();
+        applyFilters();
+    }
+
+    private void updateChips() {
+        int all = allSubs.size();
+        int active = 0;
+        int paused = 0;
+        Date today = truncateTime(new Date());
+
+        for (SubscriptionOut s : allSubs) {
+            Date next = parseDate(s.next_billing_date);
+            if (next != null && !next.before(today)) active++;
+            else paused++;
+        }
+
+        TextView chipAll = findViewById(R.id.chip_all);
+        TextView chipActive = findViewById(R.id.chip_active);
+        TextView chipPaused = findViewById(R.id.chip_paused);
+
+        chipAll.setText("Все (" + all + ")");
+        chipActive.setText("Активные (" + active + ")");
+        chipPaused.setText("На паузе (" + paused + ")");
+
+        chipAll.setBackgroundResource(currentTab == 0 ? R.drawable.bg_chip_active : R.drawable.bg_chip);
+        chipAll.setTextColor(getColor(currentTab == 0 ? android.R.color.white : R.color.text_primary));
+
+        chipActive.setBackgroundResource(currentTab == 1 ? R.drawable.bg_chip_active : R.drawable.bg_chip);
+        chipActive.setTextColor(getColor(currentTab == 1 ? android.R.color.white : R.color.text_primary));
+
+        chipPaused.setBackgroundResource(currentTab == 2 ? R.drawable.bg_chip_active : R.drawable.bg_chip);
+        chipPaused.setTextColor(getColor(currentTab == 2 ? android.R.color.white : R.color.text_primary));
+    }
+
+    private void applyFilters() {
+        filteredSubs.clear();
+        Date today = truncateTime(new Date());
+
+        for (SubscriptionOut s : allSubs) {
+            Date next = parseDate(s.next_billing_date);
+            boolean isActive = next != null && !next.before(today);
+            if (currentTab == 1 && !isActive) continue;
+            if (currentTab == 2 && isActive) continue;
+
+            if (!searchQuery.isEmpty() && (s.name == null || !s.name.toLowerCase().contains(searchQuery))) {
+                continue;
+            }
+
+            if (!categoryFilter.isEmpty()) {
+                String cat = s.category == null ? "" : s.category.trim();
+                if (!categoryFilter.contains(cat)) continue;
+            }
+
+            if (!periodFilter.isEmpty()) {
+                String p = s.billing_period == null ? "" : s.billing_period.toLowerCase();
+                if (!periodFilter.contains(p)) continue;
+            }
+
+            if (minPrice != null && s.amount < minPrice) continue;
+            if (maxPrice != null && s.amount > maxPrice) continue;
+
+            filteredSubs.add(s);
+        }
+
+        renderList();
+    }
+
+    private void renderList() {
+        LinearLayout container = findViewById(R.id.subscriptions_container);
+        container.removeAllViews();
+
+        Date today = truncateTime(new Date());
+
+        for (SubscriptionOut s : filteredSubs) {
+            View item = LayoutInflater.from(this).inflate(R.layout.item_subscription, container, false);
+
+            TextView icon = item.findViewById(R.id.sub_icon_text);
+            TextView name = item.findViewById(R.id.sub_name);
+            TextView status = item.findViewById(R.id.sub_status);
+            TextView info = item.findViewById(R.id.sub_info);
+            TextView price = item.findViewById(R.id.sub_price);
+            TextView date = item.findViewById(R.id.sub_date);
+
+            String first = s.name != null && s.name.length() > 0 ? s.name.substring(0,1).toUpperCase() : "?";
+            icon.setText(first);
+
+            name.setText(s.name);
+
+            Date next = parseDate(s.next_billing_date);
+            boolean isActive = next != null && !next.before(today);
+            status.setText(isActive ? "Активна" : "На паузе");
+            status.setBackgroundResource(isActive ? R.drawable.bg_status_active : R.drawable.bg_soft_purple);
+            status.setTextColor(isActive ? getColor(R.color.text_primary) : getColor(R.color.primary_purple));
+
+            info.setText(s.category == null ? "Без категории" : s.category);
+
+            price.setText(formatMoney(s.amount, s.currency));
+
+            if (next != null) {
+                date.setText(viewDate.format(next));
+            } else {
+                date.setText("—");
+            }
+
+            container.addView(item);
+        }
+    }
+
+    private void openFiltersDialog() {
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_filters, null);
+
+        LinearLayout catContainer = view.findViewById(R.id.filter_categories_container);
+
+        Set<String> cats = new HashSet<>();
+        for (SubscriptionOut s : allSubs) {
+            if (s.category != null && !s.category.trim().isEmpty()) {
+                cats.add(s.category.trim());
+            }
+        }
+
+        for (String c : cats) {
+            CheckBox cb = new CheckBox(this);
+            cb.setText(c);
+            cb.setChecked(categoryFilter.contains(c));
+            catContainer.addView(cb);
+        }
+
+        CheckBox pm = view.findViewById(R.id.filter_period_monthly);
+        CheckBox pw = view.findViewById(R.id.filter_period_weekly);
+        CheckBox py = view.findViewById(R.id.filter_period_yearly);
+
+        pm.setChecked(periodFilter.contains("monthly"));
+        pw.setChecked(periodFilter.contains("weekly"));
+        py.setChecked(periodFilter.contains("yearly"));
+
+        EditText min = view.findViewById(R.id.filter_price_min);
+        EditText max = view.findViewById(R.id.filter_price_max);
+
+        if (minPrice != null) min.setText(String.valueOf(minPrice));
+        if (maxPrice != null) max.setText(String.valueOf(maxPrice));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Фильтр")
+                .setView(view)
+                .setPositiveButton("Применить", (d, w) -> {
+                    categoryFilter.clear();
+                    for (int i = 0; i < catContainer.getChildCount(); i++) {
+                        View child = catContainer.getChildAt(i);
+                        if (child instanceof CheckBox) {
+                            CheckBox cb = (CheckBox) child;
+                            if (cb.isChecked()) categoryFilter.add(cb.getText().toString());
+                        }
+                    }
+
+                    periodFilter.clear();
+                    if (pm.isChecked()) periodFilter.add("monthly");
+                    if (pw.isChecked()) periodFilter.add("weekly");
+                    if (py.isChecked()) periodFilter.add("yearly");
+
+                    minPrice = min.getText().toString().trim().isEmpty() ? null : Double.parseDouble(min.getText().toString());
+                    maxPrice = max.getText().toString().trim().isEmpty() ? null : Double.parseDouble(max.getText().toString());
+
+                    applyFilters();
+                })
+                .setNegativeButton("Сбросить", (d, w) -> {
+                    categoryFilter.clear();
+                    periodFilter.clear();
+                    minPrice = null;
+                    maxPrice = null;
+                    applyFilters();
+                })
+                .show();
+    }
+
+    private Date parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
+        try { return dateFormat.parse(dateStr); } catch (Exception e) { return null; }
+    }
+
+    private Date truncateTime(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    private String formatMoney(double amount, String currency) {
+        String cur = (currency == null || currency.isEmpty()) ? "RUB" : currency;
+        String symbol = "RUB".equalsIgnoreCase(cur) ? "₽" : cur;
+        return amount + " " + symbol;
+    }
+
 }

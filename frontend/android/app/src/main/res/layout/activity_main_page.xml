@@ -66,7 +66,7 @@
                     android:id="@+id/title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="SubMonitor"
+                    android:text="CtrlS"
                     android:textColor="@color/primary_purple"
                     android:textSize="22sp"
                     android:textStyle="bold" />
@@ -120,7 +120,7 @@
                         android:id="@+id/month_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Всего в месяц"
+                        android:text="Прогноз за месяц"
                         android:textColor="@android:color/white"
                         android:textSize="12sp" />
 
@@ -139,6 +139,7 @@
                 </RelativeLayout>
 
                 <TextView
+                    android:id="@+id/total_month_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -146,14 +147,6 @@
                     android:textColor="@android:color/white"
                     android:textSize="28sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="+12% от прошлого месяца"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
 
                 <View
                     android:layout_width="match_parent"
@@ -181,6 +174,7 @@
                             android:textSize="12sp" />
 
                         <TextView
+                            android:id="@+id/active_count_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="7"
@@ -189,31 +183,57 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Экономия"
-                            android:textColor="@android:color/white"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1 240 ₽"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/period_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/period_month"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Месяц"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/period_half_year"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Полгода"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/period_year"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Год"
+                    app:backgroundTint="@color/period_button_bg"
+                    app:strokeColor="@color/primary_purple"
+                    app:strokeWidth="1dp"
+                    android:textColor="@color/period_button_text"
+                    app:cornerRadius="16dp"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
             <LinearLayout
+                android:id="@+id/soon_charge_block"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -234,6 +254,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/soon_charge_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Скоро списание"
@@ -242,6 +263,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/soon_charge_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Через 3 дня будет списано 3 499 ₽ за Adobe Creative Cloud"
@@ -289,6 +311,7 @@
                             android:textColor="@color/text_secondary" />
 
                         <TextView
+                            android:id="@+id/subscriptions_count_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="7"
@@ -335,6 +358,7 @@
                             android:textColor="@color/text_secondary" />
 
                         <TextView
+                            android:id="@+id/nearest_days_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="-1 дн."
@@ -359,6 +383,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/payments_toggle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
@@ -368,208 +393,11 @@
             </RelativeLayout>
 
             <LinearLayout
+                android:id="@+id/payments_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_black">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="N"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Notion"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Через -1 дн."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="8 $"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_green">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="S"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Spotify"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Через 2 дн."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="169 ₽"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_orange_solid">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="O"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Okko"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Через 5 дн."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="599 ₽"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_red">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Я"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Яндекс Плюс"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Через 7 дн."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="399 ₽"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-            </LinearLayout>
+                android:orientation="vertical"
+                android:layout_marginTop="10dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -581,132 +409,12 @@
                 android:textStyle="bold" />
 
             <LinearLayout
+                android:id="@+id/categories_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal"
-                android:weightSum="4">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_category"
-                    android:padding="10dp"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_category_badge"
-                        android:text="2"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_purple" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Стриминг"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_primary" />
-                </LinearLayout>
-
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_category"
-                    android:padding="10dp"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_category_badge"
-                        android:text="3"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_purple" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Музыка"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_primary" />
-                </LinearLayout>
-
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_category"
-                    android:padding="10dp"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_category_badge"
-                        android:text="4"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_purple" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="ПО"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_primary" />
-                </LinearLayout>
-
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_category"
-                    android:padding="10dp"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_category_badge"
-                        android:text="5"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_purple" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Облако"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_primary" />
-                </LinearLayout>
-            </LinearLayout>
+                android:weightSum="4" />
 
             <Space
                 android:layout_width="1dp"

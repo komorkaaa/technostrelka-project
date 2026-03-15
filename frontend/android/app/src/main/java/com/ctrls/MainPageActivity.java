@@ -12,13 +12,60 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import android.content.SharedPreferences;
+import android.view.LayoutInflater;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.ctrls.api.ApiClient;
+import com.ctrls.api.SubscriptionsApi;
+import com.ctrls.api.dto.SubscriptionOut;
+
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Date;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class MainPageActivity extends AppCompatActivity {
+
+    private static final String PREFS = "auth_prefs";
+    private static final String KEY_TOKEN = "access_token";
+
+    private SubscriptionsApi subscriptionsApi;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final DecimalFormat moneyFormat = new DecimalFormat("#,###.##");
+
+    private List<SubscriptionOut> allSubscriptions = new ArrayList<>();
+    private boolean showAllPayments = false;
+    private static final int PERIOD_MONTH = 1;
+    private static final int PERIOD_HALF_YEAR = 6;
+    private static final int PERIOD_YEAR = 12;
+    private int currentPeriodMonths = PERIOD_MONTH;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main_page);
+
+        subscriptionsApi = ApiClient.getRetrofit().create(SubscriptionsApi.class);
+
+        TextView toggle = findViewById(R.id.payments_toggle);
+        toggle.setOnClickListener(v -> {
+            showAllPayments = !showAllPayments;
+            renderPayments();
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_page_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -70,5 +117,292 @@ public class MainPageActivity extends AppCompatActivity {
             }
             return true;
         });
+
+        TextView monthTitle = findViewById(R.id.month_title);
+
+        com.google.android.material.button.MaterialButtonToggleGroup periodToggle =
+                findViewById(R.id.period_toggle);
+
+        periodToggle.check(R.id.period_month);
+
+        findViewById(R.id.period_month).setOnClickListener(v -> {
+            currentPeriodMonths = PERIOD_MONTH;
+            monthTitle.setText("Прогноз за месяц");
+            renderStats();
+        });
+
+        findViewById(R.id.period_half_year).setOnClickListener(v -> {
+            currentPeriodMonths = PERIOD_HALF_YEAR;
+            monthTitle.setText("Прогноз за полгода");
+            renderStats();
+        });
+
+        findViewById(R.id.period_year).setOnClickListener(v -> {
+            currentPeriodMonths = PERIOD_YEAR;
+            monthTitle.setText("Прогноз за год");
+            renderStats();
+        });
+
+        loadSubscriptions();
+
+    }
+
+    private void loadSubscriptions() {
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String token = prefs.getString(KEY_TOKEN, null);
+        if (token == null || token.isEmpty()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
+
+        subscriptionsApi.list("Bearer " + token).enqueue(new Callback<List<SubscriptionOut>>() {
+            @Override
+            public void onResponse(Call<List<SubscriptionOut>> call, Response<List<SubscriptionOut>> response) {
+                if (response.code() == 401) {
+                    prefs.edit().remove(KEY_TOKEN).apply();
+                    startActivity(new Intent(MainPageActivity.this, AuthActivity.class));
+                    finish();
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    allSubscriptions = response.body();
+                    renderStats();
+                    renderPayments();
+                } else {
+                    Toast.makeText(MainPageActivity.this, "Ошибка загрузки подписок", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<SubscriptionOut>> call, Throwable t) {
+                Toast.makeText(MainPageActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderStats() {
+        TextView totalMonth = findViewById(R.id.total_month_value);
+        TextView activeCount = findViewById(R.id.active_count_value);
+        TextView subsCount = findViewById(R.id.subscriptions_count_value);
+        TextView nearestDays = findViewById(R.id.nearest_days_value);
+
+        double monthlySum = 0;
+        int active = 0;
+
+        Date today = truncateTime(new Date());
+
+        List<SubscriptionOut> upcoming = new ArrayList<>();
+        double totalForPeriod = 0;
+
+        for (SubscriptionOut s : allSubscriptions) {
+            if ("monthly".equalsIgnoreCase(s.billing_period)) {
+                totalForPeriod += s.amount * currentPeriodMonths;
+            } else if ("yearly".equalsIgnoreCase(s.billing_period)) {
+                totalForPeriod += s.amount * (currentPeriodMonths / 12.0);
+            } else if ("weekly".equalsIgnoreCase(s.billing_period)) {
+                double weeks = currentPeriodMonths * 4.345;
+                totalForPeriod += s.amount * weeks;
+            }
+
+            Date next = parseDate(s.next_billing_date);
+            if (next != null && !next.before(today)) {
+                active++;
+                upcoming.add(s);
+            }
+        }
+
+
+        subsCount.setText(String.valueOf(allSubscriptions.size()));
+        activeCount.setText(String.valueOf(active));
+        totalMonth.setText(formatMoney(totalForPeriod, "RUB"));
+
+        Integer nearest = getNearestDays(upcoming, today);
+        nearestDays.setText(nearest == null ? "—" : (nearest == 0 ? "Сегодня" : ("Через " + nearest + " дн.")));
+    }
+
+    private void renderPayments() {
+        LinearLayout container = findViewById(R.id.payments_container);
+        TextView toggle = findViewById(R.id.payments_toggle);
+
+        container.removeAllViews();
+
+        Date today = truncateTime(new Date());
+
+        List<SubscriptionOut> upcoming = new ArrayList<>();
+        for (SubscriptionOut s : allSubscriptions) {
+            Date next = parseDate(s.next_billing_date);
+            if (next != null && !next.before(today)) {
+                upcoming.add(s);
+            }
+        }
+
+        Collections.sort(upcoming, (a, b) -> {
+            Date da = parseDate(a.next_billing_date);
+            Date db = parseDate(b.next_billing_date);
+            if (da == null && db == null) return 0;
+            if (da == null) return 1;
+            if (db == null) return -1;
+            return da.compareTo(db);
+        });
+
+        int limit = showAllPayments ? upcoming.size() : Math.min(3, upcoming.size());
+        for (int i = 0; i < limit; i++) {
+            SubscriptionOut s = upcoming.get(i);
+            View item = LayoutInflater.from(this).inflate(R.layout.item_payment, container, false);
+
+            TextView iconText = item.findViewById(R.id.payment_icon_text);
+            TextView name = item.findViewById(R.id.payment_name);
+            TextView subtitle = item.findViewById(R.id.payment_subtitle);
+            TextView amount = item.findViewById(R.id.payment_amount);
+
+            String first = s.name != null && s.name.length() > 0 ? s.name.substring(0, 1).toUpperCase() : "?";
+            iconText.setText(first);
+
+            name.setText(s.name);
+
+            Date next = parseDate(s.next_billing_date);
+            Integer days = next == null ? null : daysBetween(today, next);
+            if (days == null) {
+                subtitle.setText("Дата неизвестна");
+            } else if (days == 0) {
+                subtitle.setText("Сегодня");
+            } else {
+                subtitle.setText("Через " + days + " дн.");
+            }
+
+            amount.setText(formatMoney(s.amount, s.currency));
+            container.addView(item);
+        }
+
+        if (upcoming.size() <= 3) {
+            toggle.setVisibility(View.GONE);
+        } else {
+            toggle.setVisibility(View.VISIBLE);
+            toggle.setText(showAllPayments ? "Свернуть" : "Показать все");
+        }
+        renderSoonCharge();
+        renderCategories();
+    }
+
+
+
+    private Date parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
+        try {
+            return dateFormat.parse(dateStr);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Date truncateTime(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    private Integer getNearestDays(List<SubscriptionOut> list, Date today) {
+        Integer min = null;
+        for (SubscriptionOut s : list) {
+            Date next = parseDate(s.next_billing_date);
+            if (next == null || next.before(today)) continue;
+            int d = daysBetween(today, next);
+            if (min == null || d < min) min = d;
+        }
+        return min;
+    }
+
+    private int daysBetween(Date start, Date end) {
+        long diff = end.getTime() - start.getTime();
+        return (int) (diff / (24L * 60L * 60L * 1000L));
+    }
+
+    private String formatMoney(double amount, String currency) {
+        String cur = (currency == null || currency.isEmpty()) ? "RUB" : currency;
+        String symbol = "RUB".equalsIgnoreCase(cur) ? "₽" : cur;
+        return moneyFormat.format(amount) + " " + symbol;
+    }
+
+    private void renderSoonCharge() {
+        View block = findViewById(R.id.soon_charge_block);
+        TextView title = findViewById(R.id.soon_charge_title);
+        TextView text = findViewById(R.id.soon_charge_text);
+
+        Date today = truncateTime(new Date());
+
+        SubscriptionOut nearest = null;
+        int nearestDays = Integer.MAX_VALUE;
+
+        for (SubscriptionOut s : allSubscriptions) {
+            Date next = parseDate(s.next_billing_date);
+            if (next == null || next.before(today)) continue;
+            int days = daysBetween(today, next);
+            if (days < nearestDays) {
+                nearestDays = days;
+                nearest = s;
+            }
+        }
+
+        if (nearest == null) {
+            block.setVisibility(View.GONE);
+            return;
+        }
+
+        block.setVisibility(View.VISIBLE);
+        title.setText("Скоро списание");
+
+        String when;
+        if (nearestDays == 0) {
+            when = "Сегодня";
+        } else {
+            when = "Через " + nearestDays + " дн.";
+        }
+
+        String amount = formatMoney(nearest.amount, nearest.currency);
+        text.setText(when + " будет списано " + amount + " за " + nearest.name);
+    }
+
+    private void renderCategories() {
+        LinearLayout container = findViewById(R.id.categories_container);
+        container.removeAllViews();
+
+        java.util.HashMap<String, Integer> counts = new java.util.HashMap<>();
+        for (SubscriptionOut s : allSubscriptions) {
+            String key = (s.category == null || s.category.trim().isEmpty())
+                    ? "Без категории"
+                    : s.category.trim();
+            counts.put(key, counts.getOrDefault(key, 0) + 1);
+        }
+
+        List<java.util.Map.Entry<String, Integer>> list = new ArrayList<>(counts.entrySet());
+        Collections.sort(list, (a, b) -> b.getValue() - a.getValue());
+
+        int limit = Math.min(4, list.size());
+
+        for (int i = 0; i < limit; i++) {
+            java.util.Map.Entry<String, Integer> entry = list.get(i);
+
+            View item = LayoutInflater.from(this).inflate(R.layout.item_category, container, false);
+
+            TextView count = item.findViewById(R.id.category_count);
+            TextView name = item.findViewById(R.id.category_name);
+
+            count.setText(String.valueOf(entry.getValue()));
+            name.setText(entry.getKey());
+
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            if (i < limit - 1) {
+                lp.setMarginEnd(10);
+            }
+            item.setLayoutParams(lp);
+
+            container.addView(item);
+        }
     }
 }

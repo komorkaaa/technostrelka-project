@@ -132,9 +132,10 @@ public class AuthActivity extends AppCompatActivity {
                             Toast.makeText(AuthActivity.this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
                         } else if (code == 404) {
                             Toast.makeText(AuthActivity.this, "Такого пользователя нет", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(AuthActivity.this, "Ошибка входа", Toast.LENGTH_SHORT).show();
                         }
+//                        else {
+//                            Toast.makeText(AuthActivity.this, "Ошибка входа", Toast.LENGTH_SHORT).show();
+//                        }
                     }
 
                     @Override
