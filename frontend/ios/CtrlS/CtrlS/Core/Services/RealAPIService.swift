@@ -65,7 +65,7 @@ final class RealAPIService: APIService {
                 amount: dto.amount.value,
                 currency: dto.currency,
                 nextBillingDate: dto.next_billing_date,
-                status: .active,
+                status: dto.next_billing_date == nil ? .paused : .active,
                 formattedPrice: "\(formatAmount(dto.amount, currency: dto.currency)) / \(dto.billing_period)",
                 formattedDate: formatDate(dto.next_billing_date)
             )
@@ -392,7 +392,7 @@ private func mapSubscription(_ dto: SubscriptionDTO) -> Subscription {
         amount: dto.amount.value,
         currency: dto.currency,
         nextBillingDate: dto.next_billing_date,
-        status: .active,
+        status: dto.next_billing_date == nil ? .paused : .active,
         formattedPrice: "\(formatAmount(dto.amount, currency: dto.currency)) / \(dto.billing_period)",
         formattedDate: formatDate(dto.next_billing_date)
     )
