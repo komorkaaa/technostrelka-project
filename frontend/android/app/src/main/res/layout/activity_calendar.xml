@@ -26,7 +26,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -73,7 +72,6 @@
                 android:layout_marginBottom="12dp"
                 android:background="#EDEDED" />
 
-            <!-- Summary Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -89,24 +87,25 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/summary_total_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="6 045 ₽"
+                    android:text="0 ₽"
                     android:textColor="@android:color/white"
                     android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/summary_payments_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="7 платежей"
+                    android:text="0 платежей"
                     android:textColor="@android:color/white"
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <!-- Calendar Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -120,9 +119,10 @@
                     android:layout_height="wrap_content">
 
                     <TextView
+                        android:id="@+id/month_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Март 2026 г."
+                        android:text="Март 2026"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -134,6 +134,7 @@
                         android:orientation="horizontal">
 
                         <FrameLayout
+                            android:id="@+id/month_prev"
                             android:layout_width="32dp"
                             android:layout_height="32dp"
                             android:background="@drawable/bg_filter_button">
@@ -147,6 +148,7 @@
                         <Space android:layout_width="8dp" android:layout_height="1dp"/>
 
                         <FrameLayout
+                            android:id="@+id/month_next"
                             android:layout_width="32dp"
                             android:layout_height="32dp"
                             android:background="@drawable/bg_filter_button">
@@ -175,22 +177,12 @@
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Вс" android:textSize="11sp" android:textColor="@color/text_secondary" android:gravity="center"/>
                 </LinearLayout>
 
-                <!-- Сетка дней (упрощенно) -->
                 <GridLayout
+                    android:id="@+id/calendar_grid"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:columnCount="7">
-
-                    <!-- заполни нужными днями; ниже несколько примеров -->
-                    <TextView style="@style/CalendarDay" android:text="1" />
-                    <TextView style="@style/CalendarDay" android:text="2" />
-                    <TextView style="@style/CalendarDay" android:text="3" />
-                    <TextView style="@style/CalendarDay" android:text="4" />
-                    <TextView style="@style/CalendarDay" android:text="5" />
-                    <TextView style="@style/CalendarDay" android:text="6" />
-                    <TextView style="@style/CalendarDay" android:text="7" />
-                </GridLayout>
+                    android:columnCount="7" />
             </LinearLayout>
 
             <TextView
@@ -202,71 +194,12 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <!-- Карточки ближайших платежей (шаблон) -->
             <LinearLayout
+                android:id="@+id/upcoming_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon_green">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="S"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Spotify"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Завтра"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="end">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="169 ₽"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="15 мар."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-            </LinearLayout>
+                android:orientation="vertical" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
