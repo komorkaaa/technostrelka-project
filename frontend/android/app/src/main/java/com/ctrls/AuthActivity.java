@@ -14,9 +14,25 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import android.widget.Toast;
+
+import com.ctrls.api.ApiClient;
+import com.ctrls.api.AuthApi;
+import com.ctrls.api.dto.RegisterRequest;
+import com.ctrls.api.dto.TokenResponse;
+import com.ctrls.api.dto.UserOut;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import android.content.SharedPreferences;
+
 public class AuthActivity extends AppCompatActivity {
     private boolean isLoginMode = true;
-
+    private AuthApi authApi;
+    private static final String PREFS = "auth_prefs";
+    private static final String KEY_TOKEN = "access_token";
 
 
     @Override
@@ -24,6 +40,14 @@ public class AuthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_auth);
+        authApi = ApiClient.getRetrofit().create(AuthApi.class);
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String savedToken = prefs.getString(KEY_TOKEN, null);
+        if (savedToken != null && !savedToken.isEmpty()) {
+            startActivity(new Intent(this, MainPageActivity.class));
+            finish();
+            return;
+        }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.auth_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             int baseLeft = v.getPaddingLeft();
@@ -83,8 +107,66 @@ public class AuthActivity extends AppCompatActivity {
         tabRegister.setOnClickListener(switchToRegister);
 
         actionButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, MainPageActivity.class));
-            finish();
+            String email = emailField.getText().toString().trim();
+            String password = passwordField.getText().toString().trim();
+            String phone = phoneField.getText().toString().trim();
+
+            actionButton.setEnabled(false);
+
+            if (isLoginMode) {
+                authApi.login(email, password).enqueue(new Callback<TokenResponse>() {
+                    @Override
+                    public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
+                        actionButton.setEnabled(true);
+                        if (response.isSuccessful() && response.body() != null) {
+                            String token = response.body().access_token;
+                            getSharedPreferences(PREFS, MODE_PRIVATE)
+                                    .edit()
+                                    .putString(KEY_TOKEN, token)
+                                    .apply();
+                            startActivity(new Intent(AuthActivity.this, MainPageActivity.class));
+                            finish();
+                        }
+                        int code = response.code();
+                        if (code == 401) {
+                            Toast.makeText(AuthActivity.this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
+                        } else if (code == 404) {
+                            Toast.makeText(AuthActivity.this, "Такого пользователя нет", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(AuthActivity.this, "Ошибка входа", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<TokenResponse> call, Throwable t) {
+                        actionButton.setEnabled(true);
+                        Toast.makeText(AuthActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                RegisterRequest request = new RegisterRequest(email, password, phone.isEmpty() ? null : phone);
+                authApi.register(request).enqueue(new Callback<UserOut>() {
+                    @Override
+                    public void onResponse(Call<UserOut> call, Response<UserOut> response) {
+                        actionButton.setEnabled(true);
+                        if (response.isSuccessful()) {
+                            startActivity(new Intent(AuthActivity.this, MainPageActivity.class));
+                            finish();
+                        } int code = response.code();
+                        if (code == 400) {
+                            Toast.makeText(AuthActivity.this, "Такой email уже зарегистрирован", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(AuthActivity.this, "Ошибка регистрации", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<UserOut> call, Throwable t) {
+                        actionButton.setEnabled(true);
+                        Toast.makeText(AuthActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         });
     }
 
