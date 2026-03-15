@@ -10,6 +10,11 @@ struct AnalyticsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
+                    filtersSection
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    }
                     metricsGrid
                     if let error = viewModel.errorMessage {
                         Text(error)
@@ -51,6 +56,44 @@ struct AnalyticsView: View {
 }
 
 private extension AnalyticsView {
+    var filtersSection: some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
+            Picker("Период", selection: $viewModel.period) {
+                Text("Месяц").tag(AnalyticsPeriod.month)
+                Text("Полгода").tag(AnalyticsPeriod.halfYear)
+                Text("Год").tag(AnalyticsPeriod.year)
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: viewModel.period) { _, newValue in
+                Task { await viewModel.load(period: newValue, category: viewModel.selectedCategory) }
+            }
+
+            Menu {
+                Button("Все категории") { Task { await viewModel.load(period: viewModel.period, category: nil) } }
+                ForEach(viewModel.availableCategories, id: \.self) { category in
+                    Button(category) { Task { await viewModel.load(period: viewModel.period, category: category) } }
+                }
+            } label: {
+                HStack {
+                    Text(viewModel.selectedCategory ?? "Все категории")
+                        .font(DS.Typography.caption)
+                        .foregroundStyle(DS.ColorToken.textSecondary)
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(DS.ColorToken.textSecondary)
+                }
+                .padding(.horizontal, DS.Spacing.md)
+                .padding(.vertical, DS.Spacing.sm)
+                .background(DS.ColorToken.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
+                )
+            }
+        }
+    }
     var metricsGrid: some View {
         let metrics = viewModel.overview?.metrics ?? placeholderMetrics
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Spacing.md), count: 2), spacing: DS.Spacing.md) {
@@ -71,7 +114,13 @@ private extension AnalyticsView {
         return VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Динамика расходов")
                 .font(DS.Typography.headline)
-            LineChart(values: chartPoints.map { $0.value })
+            if chartPoints.isEmpty {
+                Text("Нет данных для отображения")
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(DS.ColorToken.textSecondary)
+            } else {
+                LineChart(values: chartPoints.map { $0.value })
+            }
             HStack(spacing: DS.Spacing.md) {
                 StatBadge(title: "Минимум", value: viewModel.overview?.chartMin ?? "—", color: .purple)
                 StatBadge(title: "Максимум", value: viewModel.overview?.chartMax ?? "—", color: .purple)
@@ -91,7 +140,13 @@ private extension AnalyticsView {
         return VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("По категориям")
                 .font(DS.Typography.headline)
-            PieChart(segments: categories.map { PieSegment(value: $0.value, color: color(from: $0.colorName)) })
+            if categories.isEmpty {
+                Text("Нет данных по категориям")
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(DS.ColorToken.textSecondary)
+            } else {
+                PieChart(segments: categories.map { PieSegment(value: $0.value, color: color(from: $0.colorName)) })
+            }
             VStack(spacing: DS.Spacing.sm) {
                 if categories.isEmpty {
                     Text("Нет данных")
