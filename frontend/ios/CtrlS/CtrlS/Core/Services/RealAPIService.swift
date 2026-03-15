@@ -192,6 +192,20 @@ final class RealAPIService: APIService {
         }
         return EmailImportResult(parsed: parsed, created: response.created)
     }
+
+    func updateProfile(_ payload: ProfileUpdatePayload) async throws -> UserProfile {
+        let data = try JSONEncoder().encode(ProfileUpdateRequestDTO(email: payload.email, phone: payload.phone))
+        let response: UserProfileDTO = try await client.request("auth/me", method: .patch, body: data)
+        return UserProfile(id: response.id, email: response.email, phone: response.phone)
+    }
+
+    func changePassword(_ payload: PasswordChangePayload) async throws {
+        let data = try JSONEncoder().encode(PasswordChangeRequestDTO(
+            current_password: payload.currentPassword,
+            new_password: payload.newPassword
+        ))
+        try await client.requestVoid("auth/change-password", method: .post, body: data)
+    }
 }
 
 private struct AnalyticsResponseDTO: Decodable {
@@ -278,6 +292,16 @@ private struct EmailParsedSubscriptionDTO: Decodable {
     let currency: String?
     let sender: String
     let subject: String
+}
+
+private struct ProfileUpdateRequestDTO: Encodable {
+    let email: String?
+    let phone: String?
+}
+
+private struct PasswordChangeRequestDTO: Encodable {
+    let current_password: String
+    let new_password: String
 }
 
 private struct FlexibleDouble: Decodable {
