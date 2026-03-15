@@ -5,6 +5,8 @@ struct ProfileView: View {
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
     @State private var isImportPresented = false
+    @State private var isEditProfilePresented = false
+    @State private var isChangePasswordPresented = false
     @State private var showLogoutConfirm = false
     @StateObject private var viewModel = ProfileViewModel(service: RealAPIService.shared)
 
@@ -44,6 +46,16 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $isImportPresented) {
                 EmailImportView(service: RealAPIService.shared)
+            }
+            .sheet(isPresented: $isEditProfilePresented) {
+                ProfileEditView(email: viewModel.profile?.email, phone: viewModel.profile?.phone) { email, phone in
+                    await viewModel.updateProfile(email: email, phone: phone)
+                }
+            }
+            .sheet(isPresented: $isChangePasswordPresented) {
+                ChangePasswordView { current, new in
+                    await viewModel.changePassword(current: current, new: new)
+                }
             }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
@@ -100,7 +112,7 @@ private extension ProfileView {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             sectionTitle("Настройки")
             SettingRow(icon: "person", title: "Личная информация", subtitle: "Имя, email, телефон")
-                .onTapGesture { activeSheet = SheetDestination(title: "Личная информация") }
+                .onTapGesture { isEditProfilePresented = true }
             SettingRow(icon: "bell", title: "Уведомления", subtitle: "Настройка оповещений")
                 .onTapGesture { activeSheet = SheetDestination(title: "Уведомления") }
             SettingRow(icon: "creditcard", title: "Способы оплаты", subtitle: "Карты и интеграции")
@@ -123,7 +135,7 @@ private extension ProfileView {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             sectionTitle("Безопасность")
             SettingRow(icon: "lock.shield", title: "Пароль и безопасность", subtitle: "Смена пароля, 2FA")
-                .onTapGesture { activeSheet = SheetDestination(title: "Пароль и безопасность") }
+                .onTapGesture { isChangePasswordPresented = true }
         }
     }
 

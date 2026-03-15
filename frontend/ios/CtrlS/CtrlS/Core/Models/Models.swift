@@ -139,3 +139,13 @@ struct EmailImportResult {
     let parsed: [EmailParsedSubscription]
     let created: Int
 }
+
+struct ProfileUpdatePayload {
+    let email: String?
+    let phone: String?
+}
+
+struct PasswordChangePayload {
+    let currentPassword: String
+    let newPassword: String
+}

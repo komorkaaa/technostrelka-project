@@ -14,4 +14,6 @@ protocol APIService {
     func fetchForecast() async throws -> ForecastSummary
     func fetchProfile() async throws -> UserProfile
     func importSubscriptionsFromEmail(_ request: EmailImportRequest) async throws -> EmailImportResult
+    func updateProfile(_ payload: ProfileUpdatePayload) async throws -> UserProfile
+    func changePassword(_ payload: PasswordChangePayload) async throws
 }
