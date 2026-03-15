@@ -15,6 +15,8 @@ final class RealAPIService: APIService {
         let upcomingValue = try await upcoming
 
         let totalMonthly = formatAmount(analyticsValue.totals.month, currency: "RUB")
+        let avgHalfYear = analyticsValue.totals.half_year.value / 6.0
+        let changeText = percentChange(current: analyticsValue.totals.month.value, previous: avgHalfYear)
         let activeCount = "\(subscriptionsValue.count)"
 
         let nextPayment = upcomingValue.items.sorted(by: { $0.days_until < $1.days_until }).first
@@ -25,7 +27,7 @@ final class RealAPIService: APIService {
 
         return HomeSummary(
             totalMonthly: totalMonthly,
-            changeText: "",
+            changeText: changeText == "—" ? "" : "\(changeText) от прошлого периода",
             activeCount: activeCount,
             nextPayment: nextPaymentText,
             savings: "—",
@@ -33,8 +35,8 @@ final class RealAPIService: APIService {
         )
     }
 
-    func fetchUpcomingPayments() async throws -> [PaymentRowModel] {
-        let response: UpcomingNotificationsResponseDTO = try await client.request("notifications/upcoming", query: ["days": "30"])
+    func fetchUpcomingPayments(days: Int) async throws -> [PaymentRowModel] {
+        let response: UpcomingNotificationsResponseDTO = try await client.request("notifications/upcoming", query: ["days": "\(days)"])
         return response.items.map {
             PaymentRowModel(
                 title: $0.name,
@@ -56,11 +58,16 @@ final class RealAPIService: APIService {
         let response: [SubscriptionDTO] = try await client.request("subscriptions")
         let mapped = response.map { dto in
             Subscription(
-                title: dto.name,
-                subtitle: dto.category ?? dto.billing_period,
-                price: "\(formatAmount(dto.amount, currency: dto.currency)) / \(dto.billing_period)",
+                id: dto.id,
+                name: dto.name,
+                category: dto.category,
+                billingPeriod: dto.billing_period,
+                amount: dto.amount.value,
+                currency: dto.currency,
+                nextBillingDate: dto.next_billing_date,
                 status: .active,
-                date: formatDate(dto.next_billing_date)
+                formattedPrice: "\(formatAmount(dto.amount, currency: dto.currency)) / \(dto.billing_period)",
+                formattedDate: formatDate(dto.next_billing_date)
             )
         }
 
@@ -75,6 +82,22 @@ final class RealAPIService: APIService {
         return filtered
     }
 
+    func createSubscription(_ payload: SubscriptionPayload) async throws -> Subscription {
+        let data = try encodeSubscriptionRequest(payload)
+        let dto: SubscriptionDTO = try await client.request("subscriptions", method: .post, body: data)
+        return mapSubscription(dto)
+    }
+
+    func updateSubscription(id: Int, payload: SubscriptionPayload) async throws -> Subscription {
+        let data = try encodeSubscriptionRequest(payload)
+        let dto: SubscriptionDTO = try await client.request("subscriptions/\(id)", method: .put, body: data)
+        return mapSubscription(dto)
+    }
+
+    func deleteSubscription(id: Int) async throws {
+        try await client.requestVoid("subscriptions/\(id)", method: .delete)
+    }
+
     func fetchNotifications() async throws -> [NotificationItem] {
         let response: UpcomingNotificationsResponseDTO = try await client.request("notifications/upcoming", query: ["days": "30"])
         return response.items.map {
@@ -84,6 +107,15 @@ final class RealAPIService: APIService {
                 time: formatDate($0.next_billing_date)
             )
         }
+    }
+
+    func fetchAnalyticsTotals() async throws -> AnalyticsTotals {
+        let summary: AnalyticsResponseDTO = try await client.request("analytics")
+        return AnalyticsTotals(
+            month: summary.totals.month.value,
+            halfYear: summary.totals.half_year.value,
+            year: summary.totals.year.value
+        )
     }
 
     func fetchAnalyticsOverview(period: AnalyticsPeriod, category: String?) async throws -> AnalyticsOverview {
@@ -131,6 +163,20 @@ final class RealAPIService: APIService {
             categories: categories
         )
     }
+
+    func fetchForecast() async throws -> ForecastSummary {
+        let response: ForecastResponseDTO = try await client.request("forecast")
+        return ForecastSummary(
+            month: formatAmount(response.month, currency: "RUB"),
+            halfYear: formatAmount(response.half_year, currency: "RUB"),
+            year: formatAmount(response.year, currency: "RUB")
+        )
+    }
+
+    func fetchProfile() async throws -> UserProfile {
+        let response: UserProfileDTO = try await client.request("auth/me")
+        return UserProfile(id: response.id, email: response.email, phone: response.phone)
+    }
 }
 
 private struct AnalyticsResponseDTO: Decodable {
@@ -152,6 +198,12 @@ private struct AnalyticsChartPointDTO: Decodable {
 }
 
 private struct AnalyticsTotalsDTO: Decodable {
+    let month: FlexibleDouble
+    let half_year: FlexibleDouble
+    let year: FlexibleDouble
+}
+
+private struct ForecastResponseDTO: Decodable {
     let month: FlexibleDouble
     let half_year: FlexibleDouble
     let year: FlexibleDouble
@@ -179,6 +231,15 @@ private struct SubscriptionDTO: Decodable {
     let billing_period: String
     let category: String?
     let next_billing_date: String?
+}
+
+private struct UserProfileDTO: Decodable {
+    let id: Int
+    let email: String
+    let phone: String?
+    let is_active: Bool
+    let is_verified: Bool
+    let created_at: String
 }
 
 private struct FlexibleDouble: Decodable {
@@ -258,6 +319,57 @@ private func formatDate(_ value: String?) -> String {
     out.locale = Locale(identifier: "ru_RU")
     out.dateFormat = "dd MMM"
     return out.string(from: date)
+}
+
+private func mapSubscription(_ dto: SubscriptionDTO) -> Subscription {
+    Subscription(
+        id: dto.id,
+        name: dto.name,
+        category: dto.category,
+        billingPeriod: dto.billing_period,
+        amount: dto.amount.value,
+        currency: dto.currency,
+        nextBillingDate: dto.next_billing_date,
+        status: .active,
+        formattedPrice: "\(formatAmount(dto.amount, currency: dto.currency)) / \(dto.billing_period)",
+        formattedDate: formatDate(dto.next_billing_date)
+    )
+}
+
+private func encodeSubscriptionRequest(_ payload: SubscriptionPayload) throws -> Data {
+    guard payload.amount.isFinite, payload.amount > 0 else {
+        throw APIError(message: "Введите корректную сумму.")
+    }
+
+    var dict: [String: String] = [
+        "name": payload.name,
+        "amount": formatDecimalString(payload.amount),
+        "currency": payload.currency,
+        "billing_period": payload.billingPeriod
+    ]
+
+    if let category = payload.category, !category.isEmpty {
+        dict["category"] = category
+    }
+    if let date = payload.nextBillingDate {
+        dict["next_billing_date"] = encodeDate(date)
+    }
+
+    if let data = try? JSONSerialization.data(withJSONObject: dict, options: []) {
+        return data
+    }
+    return Data("{}".utf8)
+}
+
+private func formatDecimalString(_ value: Double) -> String {
+    String(format: "%.2f", value)
+}
+
+private func encodeDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: date)
 }
 
 private func percentChange(current: Double, previous: Double) -> String {

@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct CalendarView: View {
+    @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
+    @StateObject private var viewModel = CalendarViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -10,6 +12,11 @@ struct CalendarView: View {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                     monthCard
                     calendarCard
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(DS.Typography.caption)
+                            .foregroundStyle(.red)
+                    }
                     upcomingSection
                 }
                 .padding(.horizontal, DS.Spacing.md)
@@ -32,12 +39,14 @@ struct CalendarView: View {
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
+            .task(id: session.accessToken) { await viewModel.load() }
         }
     }
 }
 
 #Preview {
     CalendarView()
+        .environmentObject(SessionManager.shared)
 }
 
 private extension CalendarView {
@@ -55,10 +64,10 @@ private extension CalendarView {
                 Text("Всего в этом месяце")
                     .font(DS.Typography.body)
                     .foregroundStyle(.white.opacity(0.9))
-                Text("6 045 ₽")
+                Text(viewModel.forecast?.month ?? "—")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
-                Text("7 платежей")
+                Text("\(viewModel.upcomingPayments.count) платежей")
                     .font(DS.Typography.caption)
                     .foregroundStyle(.white.opacity(0.8))
             }
@@ -71,7 +80,7 @@ private extension CalendarView {
     var calendarCard: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             HStack {
-                Text("Март 2026")
+                Text(currentMonthTitle())
                     .font(DS.Typography.headline)
                 Spacer()
                 HStack(spacing: 8) {
@@ -95,12 +104,15 @@ private extension CalendarView {
             Text("Ближайшие 7 дней")
                 .font(DS.Typography.headline)
             VStack(spacing: DS.Spacing.sm) {
-                PaymentRow(title: "Spotify", subtitle: "Через 2 дн.", amount: "169 ₽", color: .green)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Spotify") }
-                PaymentRow(title: "Okko", subtitle: "Через 5 дн.", amount: "599 ₽", color: .orange)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Okko") }
-                PaymentRow(title: "Яндекс Плюс", subtitle: "Через 7 дн.", amount: "399 ₽", color: .red)
-                    .onTapGesture { activeSheet = SheetDestination(title: "Яндекс Плюс") }
+                if viewModel.upcomingPayments.isEmpty {
+                    Text("Нет ближайших списаний")
+                        .font(DS.Typography.caption)
+                        .foregroundStyle(DS.ColorToken.textSecondary)
+                }
+                ForEach(viewModel.upcomingPayments) { payment in
+                    PaymentRow(title: payment.title, subtitle: payment.subtitle, amount: payment.amount, color: color(from: payment.colorName))
+                        .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
+                }
             }
         }
     }
@@ -112,6 +124,25 @@ private extension CalendarView {
                 .frame(width: 28, height: 28)
                 .background(DS.ColorToken.chipBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+    }
+
+    func currentMonthTitle() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "LLLL yyyy"
+        return formatter.string(from: Date()).capitalized
+    }
+
+    func color(from name: String) -> Color {
+        switch name {
+        case "black": return .black
+        case "green": return .green
+        case "orange": return .orange
+        case "red": return .red
+        case "blue": return .blue
+        case "purple": return .purple
+        default: return .gray
         }
     }
 }

@@ -5,6 +5,10 @@ struct SubscriptionsView: View {
     @State private var query = ""
     @State private var selectedTab: Tab = .all
     @State private var isNotificationsPresented = false
+    @State private var isCreatePresented = false
+    @State private var editingSubscription: Subscription?
+    @State private var deleteTarget: Subscription?
+    @State private var showDeleteConfirm = false
     @State private var activeSheet: SheetDestination?
     @StateObject private var viewModel = SubscriptionsViewModel(service: RealAPIService.shared)
 
@@ -34,12 +38,37 @@ struct SubscriptionsView: View {
                             .foregroundStyle(DS.ColorToken.textSecondary)
                     }
                 }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { isCreatePresented = true }) {
+                        Image(systemName: "plus")
+                            .foregroundStyle(DS.ColorToken.accent)
+                    }
+                }
             }
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
             }
+            .sheet(isPresented: $isCreatePresented) {
+                SubscriptionFormView(mode: .create) { payload in
+                    try await viewModel.create(payload: payload, query: query, status: selectedTab.status)
+                }
+            }
+            .sheet(item: $editingSubscription) { subscription in
+                SubscriptionFormView(mode: .edit(subscription)) { payload in
+                    try await viewModel.update(id: subscription.id, payload: payload, query: query, status: selectedTab.status)
+                }
+            }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
+            }
+            .confirmationDialog("Удалить подписку?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("Удалить", role: .destructive) {
+                    guard let target = deleteTarget else { return }
+                    Task { try? await viewModel.delete(id: target.id, query: query, status: selectedTab.status) }
+                }
+                Button("Отмена", role: .cancel) {
+                    deleteTarget = nil
+                }
             }
             .task(id: session.accessToken) { await viewModel.load(query: query, status: selectedTab.status) }
         }
@@ -136,6 +165,15 @@ private extension SubscriptionsView {
                     date: item.date
                 )
                 .onTapGesture { activeSheet = SheetDestination(title: item.title) }
+                .contextMenu {
+                    Button("Редактировать") {
+                        editingSubscription = item
+                    }
+                    Button("Удалить", role: .destructive) {
+                        deleteTarget = item
+                        showDeleteConfirm = true
+                    }
+                }
             }
         }
     }
