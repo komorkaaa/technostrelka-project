@@ -4,6 +4,7 @@ struct ProfileView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
+    @State private var isImportPresented = false
     @State private var showLogoutConfirm = false
     @StateObject private var viewModel = ProfileViewModel(service: RealAPIService.shared)
 
@@ -40,6 +41,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+            }
+            .sheet(isPresented: $isImportPresented) {
+                EmailImportView(service: RealAPIService.shared)
             }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
@@ -101,6 +105,8 @@ private extension ProfileView {
                 .onTapGesture { activeSheet = SheetDestination(title: "Уведомления") }
             SettingRow(icon: "creditcard", title: "Способы оплаты", subtitle: "Карты и интеграции")
                 .onTapGesture { activeSheet = SheetDestination(title: "Способы оплаты") }
+            SettingRow(icon: "tray.and.arrow.down", title: "Импорт из почты", subtitle: "IMAP и демо‑данные")
+                .onTapGesture { isImportPresented = true }
         }
     }
 
@@ -128,6 +134,8 @@ private extension ProfileView {
                 .onTapGesture { activeSheet = SheetDestination(title: "Помощь и поддержка") }
             SettingRow(icon: "arrow.down.circle", title: "Экспорт данных", subtitle: "Скачать все данные")
                 .onTapGesture { activeSheet = SheetDestination(title: "Экспорт данных") }
+            SettingRow(icon: "arrow.clockwise", title: "Обновить данные", subtitle: "Синхронизировать профиль")
+                .onTapGesture { Task { await viewModel.load() } }
         }
     }
 

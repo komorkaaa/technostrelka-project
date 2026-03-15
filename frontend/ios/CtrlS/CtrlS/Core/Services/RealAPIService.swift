@@ -177,6 +177,21 @@ final class RealAPIService: APIService {
         let response: UserProfileDTO = try await client.request("auth/me")
         return UserProfile(id: response.id, email: response.email, phone: response.phone)
     }
+
+    func importSubscriptionsFromEmail(_ request: EmailImportRequest) async throws -> EmailImportResult {
+        let data = try encodeEmailImportRequest(request)
+        let response: EmailImportResultDTO = try await client.request("email/import", method: .post, body: data)
+        let parsed = response.parsed.map {
+            EmailParsedSubscription(
+                service: $0.service,
+                amount: $0.amount,
+                currency: $0.currency,
+                sender: $0.sender,
+                subject: $0.subject
+            )
+        }
+        return EmailImportResult(parsed: parsed, created: response.created)
+    }
 }
 
 private struct AnalyticsResponseDTO: Decodable {
@@ -240,6 +255,29 @@ private struct UserProfileDTO: Decodable {
     let is_active: Bool
     let is_verified: Bool
     let created_at: String
+}
+
+private struct EmailImportRequestDTO: Encodable {
+    let email: String?
+    let password: String?
+    let imap_server: String
+    let mailbox: String
+    let limit: Int
+    let use_sample: Bool
+    let consent_to_use_password: Bool
+}
+
+private struct EmailImportResultDTO: Decodable {
+    let parsed: [EmailParsedSubscriptionDTO]
+    let created: Int
+}
+
+private struct EmailParsedSubscriptionDTO: Decodable {
+    let service: String
+    let amount: String?
+    let currency: String?
+    let sender: String
+    let subject: String
 }
 
 private struct FlexibleDouble: Decodable {
@@ -363,6 +401,19 @@ private func encodeSubscriptionRequest(_ payload: SubscriptionPayload) throws ->
 
 private func formatDecimalString(_ value: Double) -> String {
     String(format: "%.2f", value)
+}
+
+private func encodeEmailImportRequest(_ request: EmailImportRequest) throws -> Data {
+    let dto = EmailImportRequestDTO(
+        email: request.email?.isEmpty == true ? nil : request.email,
+        password: request.password?.isEmpty == true ? nil : request.password,
+        imap_server: request.imapServer,
+        mailbox: request.mailbox,
+        limit: request.limit,
+        use_sample: request.useSample,
+        consent_to_use_password: request.consentToUsePassword
+    )
+    return try JSONEncoder().encode(dto)
 }
 
 private func encodeDate(_ date: Date) -> String {
