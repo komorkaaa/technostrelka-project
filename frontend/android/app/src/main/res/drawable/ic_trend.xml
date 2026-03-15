@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- линия тренда -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#18A957"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,16 L9,11 L13,15 L20,8" />
+
+    <!-- стрелка -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#18A957"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M18,8 H20 V10" />
+</vector>

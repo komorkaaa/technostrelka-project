@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.models.user import User
-from app.schemas.auth import Token, UserCreate, UserOut
+from app.schemas.auth import PasswordChange, Token, UserCreate, UserOut, UserUpdate
 from app.core.security import create_access_token, get_current_user, hash_password, verify_password
 
 
@@ -45,3 +45,47 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_me(
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        return current_user
+
+    if "email" in data and data["email"] != current_user.email:
+        existing = db.query(User).filter(User.email == data["email"]).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        current_user.email = data["email"]
+
+    if "phone" in data:
+        phone_value = data["phone"]
+        if phone_value:
+            existing = db.query(User).filter(User.phone == phone_value, User.id != current_user.id).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Phone already registered")
+        current_user.phone = phone_value
+
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/change-password", status_code=204)
+def change_password(
+    payload: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    current_user.password_hash = hash_password(payload.new_password)
+    db.add(current_user)
+    db.commit()
+    return None

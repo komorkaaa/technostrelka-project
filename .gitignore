@@ -33,3 +33,5 @@ __pycache__/
 *$py.class
 *.xcuserstate
 **/xcuserdata/
+
+frontend/ios/CtrlS/CtrlS.xcodeproj/project.xcworkspace/xcuserdata/makbuk.xcuserdatad/UserInterfaceState.xcuserstate
