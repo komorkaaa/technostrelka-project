@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/day_container"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:layout_margin="0dp"
+    android:layout_columnWeight="1"
+    android:layout_rowWeight="1">
+
+    <TextView
+        android:id="@+id/day_number"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_calendar_day"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp" />
+
+    <View
+        android:id="@+id/day_dot"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_dot_purple"
+        android:visibility="gone" />
+</FrameLayout>
