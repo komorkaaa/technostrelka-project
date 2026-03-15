@@ -4,6 +4,8 @@ struct HomeView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
     @State private var isCreatePresented = false
+    @State private var isImportPresented = false
+    @State private var selectedSubscription: Subscription?
     @State private var activeSheet: SheetDestination?
     @StateObject private var viewModel = HomeViewModel(service: RealAPIService.shared)
 
@@ -12,7 +14,12 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                     header
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    }
                     totalCard
+                    forecastSection
                     upcomingCard
                     if let error = viewModel.errorMessage {
                         Text(error)
@@ -21,6 +28,7 @@ struct HomeView: View {
                     }
                     quickStats
                     paymentsSection
+                    recentSection
                     categoriesSection
                 }
                 .padding(.horizontal, DS.Spacing.md)
@@ -38,10 +46,21 @@ struct HomeView: View {
                     await viewModel.load()
                 }
             }
+            .sheet(isPresented: $isImportPresented) {
+                EmailImportView(service: RealAPIService.shared)
+            }
+            .sheet(item: $selectedSubscription) { subscription in
+                SubscriptionDetailView(
+                    subscription: subscription,
+                    onEdit: { activeSheet = SheetDestination(title: "Редактировать \(subscription.name)") },
+                    onDelete: { activeSheet = SheetDestination(title: "Удалить \(subscription.name)") }
+                )
+            }
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
             .task(id: session.accessToken) { await viewModel.load() }
+            .refreshable { await viewModel.load() }
         }
     }
 }
@@ -102,6 +121,18 @@ private extension HomeView {
         .frame(maxWidth: .infinity, minHeight: 180)
     }
 
+    var forecastSection: some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
+            Text("Прогнозируемые расходы")
+                .font(DS.Typography.headline)
+            HStack(spacing: DS.Spacing.md) {
+                ForecastCard(title: "Месяц", value: viewModel.forecast?.month ?? "—")
+                ForecastCard(title: "Полгода", value: viewModel.forecast?.halfYear ?? "—")
+                ForecastCard(title: "Год", value: viewModel.forecast?.year ?? "—")
+            }
+        }
+    }
+
     var upcomingCard: some View {
         HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "exclamationmark.circle")
@@ -155,9 +186,34 @@ private extension HomeView {
             }
 
             VStack(spacing: DS.Spacing.sm) {
+                if viewModel.upcomingPayments.isEmpty {
+                    EmptyInline(text: "Нет ближайших списаний")
+                }
                 ForEach(viewModel.upcomingPayments) { payment in
                     PaymentRow(title: payment.title, subtitle: payment.subtitle, amount: payment.amount, color: color(from: payment.colorName))
                         .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
+                }
+            }
+        }
+    }
+
+    var recentSection: some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
+            Text("Последние подписки")
+                .font(DS.Typography.headline)
+            if viewModel.recentSubscriptions.isEmpty {
+                EmptyInline(text: "Нет подписок для отображения")
+            } else {
+                VStack(spacing: DS.Spacing.sm) {
+                    ForEach(viewModel.recentSubscriptions) { item in
+                        SubscriptionCompactRow(
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            price: item.price,
+                            date: item.date
+                        )
+                        .onTapGesture { selectedSubscription = item }
+                    }
                 }
             }
         }
@@ -167,10 +223,16 @@ private extension HomeView {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Популярные категории")
                 .font(DS.Typography.headline)
-            HStack(spacing: DS.Spacing.md) {
-                ForEach(viewModel.categories) { category in
-                    CategoryChip(title: category.title, count: category.count)
-                        .onTapGesture { activeSheet = SheetDestination(title: "Категория: \(category.title)") }
+            if viewModel.categories.isEmpty {
+                EmptyInline(text: "Нет данных по категориям")
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DS.Spacing.md) {
+                        ForEach(viewModel.categories) { category in
+                            CategoryChip(title: category.title, count: category.count)
+                                .onTapGesture { activeSheet = SheetDestination(title: "Категория: \(category.title)") }
+                        }
+                    }
                 }
             }
         }
@@ -260,6 +322,86 @@ private struct PaymentRow: View {
             RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
         )
+    }
+}
+
+private struct ForecastCard: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(DS.Typography.caption)
+                .foregroundStyle(DS.ColorToken.textSecondary)
+            Text(value)
+                .font(DS.Typography.body)
+                .foregroundStyle(DS.ColorToken.textPrimary)
+        }
+        .padding(DS.Spacing.md)
+        .frame(maxWidth: .infinity)
+        .background(DS.ColorToken.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
+        )
+    }
+}
+
+private struct SubscriptionCompactRow: View {
+    let title: String
+    let subtitle: String
+    let price: String
+    let date: String
+
+    var body: some View {
+        HStack(spacing: DS.Spacing.md) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(DS.ColorToken.chipBackground)
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Text(String(title.prefix(1)))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(DS.ColorToken.accent)
+                )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(DS.Typography.body)
+                    .foregroundStyle(DS.ColorToken.textPrimary)
+                Text(subtitle)
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(DS.ColorToken.textSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(price)
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(DS.ColorToken.accent)
+                Text(date)
+                    .font(DS.Typography.caption)
+                    .foregroundStyle(DS.ColorToken.textSecondary)
+            }
+        }
+        .padding(DS.Spacing.md)
+        .background(DS.ColorToken.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
+        )
+    }
+}
+
+private struct EmptyInline: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(DS.Typography.caption)
+            .foregroundStyle(DS.ColorToken.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, DS.Spacing.xs)
     }
 }
 
