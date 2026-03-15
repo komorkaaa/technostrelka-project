@@ -7,12 +7,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, "public");
 const port = process.env.PORT || 3000;
+const backendBaseUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
 const routeMap = {
+  "/": "/index.html",
   "/subscriptions": "/subscriptions.html",
   "/calendar": "/calendar.html",
   "/analytics": "/analytics.html",
-  "/settings": "/settings.html"
+  "/settings": "/settings.html",
+  "/auth": "/auth.html"
 };
 
 const mimeTypes = {
@@ -45,9 +48,51 @@ function serveFile(filePath, res) {
   });
 }
 
-const server = http.createServer((req, res) => {
+function collectBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
+async function proxyApi(req, res) {
+  const targetPath = req.url.replace(/^\/api/, "");
+  const targetUrl = `${backendBaseUrl}${targetPath}`;
+  const headers = {};
+
+  if (req.headers["content-type"]) headers["content-type"] = req.headers["content-type"];
+  if (req.headers["authorization"]) headers["authorization"] = req.headers["authorization"];
+
+  let body;
+  if (!["GET", "HEAD"].includes(req.method)) {
+    body = await collectBody(req);
+  }
+
+  try {
+    const apiResponse = await fetch(targetUrl, {
+      method: req.method,
+      headers,
+      body
+    });
+    const contentType = apiResponse.headers.get("content-type") || "application/json; charset=utf-8";
+    res.writeHead(apiResponse.status, { "Content-Type": contentType });
+    const data = Buffer.from(await apiResponse.arrayBuffer());
+    res.end(data);
+  } catch (error) {
+    send(res, 502, "application/json; charset=utf-8", JSON.stringify({ error: "Bad Gateway" }));
+  }
+}
+
+const server = http.createServer(async (req, res) => {
   const rawPath = decodeURIComponent(req.url.split("?")[0]);
-  let reqPath = rawPath === "/" ? "/index.html" : rawPath;
+  let reqPath = rawPath;
+
+  if (reqPath.startsWith("/api/")) {
+    await proxyApi(req, res);
+    return;
+  }
 
   if (routeMap[reqPath]) {
     reqPath = routeMap[reqPath];

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body data-page="settings">
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -23,7 +23,7 @@
         <a href="/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 20h18" stroke-width="2"/><path d="M7 20V10M12 20V4M17 20v-6" stroke-width="2"/></svg>Аналитика</a>
         <a class="active" href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2"/><path d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z" stroke-width="1.6"/></svg>Настройки</a>
       </nav>
-      <div class="cta"><button class="button-primary">+ Добавить подписку</button></div>
+      <div class="cta"><button class="button-primary" onclick="location.href='/auth'">Войти</button></div>
     </aside>
 
     <div class="main">
@@ -33,10 +33,7 @@
           <input type="text" placeholder="Поиск подписок..." />
         </div>
         <div class="top-actions">
-          <div class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke-width="2"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke-width="2"/></svg>
-            <span class="dot">3</span>
-          </div>
+          <div class="badge">🔔<span>3</span></div>
           <div class="avatar">П</div>
         </div>
       </div>
@@ -44,42 +41,23 @@
       <div class="content">
         <div class="page-title">
           <h2>Настройки</h2>
-          <p>Управление профилем и предпочтениями</p>
-        </div>
-
-        <div class="pills">
-          <span class="pill active">Профиль</span>
-          <span class="pill">Уведомления</span>
-          <span class="pill">Оплата</span>
-          <span class="pill">Безопасность</span>
+          <p>Профиль пользователя</p>
         </div>
 
         <div class="panel">
           <div class="panel-header"><h4>Личная информация</h4></div>
-
           <div class="settings-form">
-            <div class="row">
-              <div><label>Имя</label><input type="text" value="Пётр" /></div>
-              <div><label>Фамилия</label><input type="text" value="Иванов" /></div>
-            </div>
-            <div><label>Email</label><input type="email" value="petr@example.com" /></div>
-            <div><label>Телефон</label><input type="tel" value="+7 (999) 123-45-67" /></div>
-            <div>
-              <label>Часовой пояс</label>
-              <select>
-                <option>Москва (GMT+3)</option>
-                <option>Калининград (GMT+2)</option>
-                <option>Самара (GMT+4)</option>
-              </select>
-            </div>
+            <div><label>Email</label><input id="setEmail" type="email" /></div>
+            <div><label>Телефон</label><input id="setPhone" type="tel" /></div>
             <div class="toolbar">
-              <button class="pill active">Сохранить изменения</button>
-              <button class="pill">Отмена</button>
+              <button class="pill active" type="button">Сохранить</button>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script src="/app.js"></script>
 </body>
 </html>

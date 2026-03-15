@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body data-page="analytics">
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -18,12 +18,12 @@
       </div>
       <nav class="nav">
         <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4V14H9v8H5a2 2 0 0 1-2-2z" stroke-width="2"/></svg>Главная</a>
-        <a  href="/subscriptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2"/><path d="M3 10h18" stroke-width="2"/></svg>Подписки</a>
+        <a href="/subscriptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2"/><path d="M3 10h18" stroke-width="2"/></svg>Подписки</a>
         <a href="/calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>Календарь</a>
         <a class="active" href="/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 20h18" stroke-width="2"/><path d="M7 20V10M12 20V4M17 20v-6" stroke-width="2"/></svg>Аналитика</a>
         <a href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2"/><path d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z" stroke-width="1.6"/></svg>Настройки</a>
       </nav>
-      <div class="cta"><button class="button-primary">+ Добавить подписку</button></div>
+      <div class="cta"><button class="button-primary" onclick="location.href='/auth'">Войти</button></div>
     </aside>
 
     <div class="main">
@@ -33,10 +33,7 @@
           <input type="text" placeholder="Поиск подписок..." />
         </div>
         <div class="top-actions">
-          <div class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke-width="2"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke-width="2"/></svg>
-            <span class="dot">3</span>
-          </div>
+          <div class="badge">🔔<span>3</span></div>
           <div class="avatar">П</div>
         </div>
       </div>
@@ -44,40 +41,19 @@
       <div class="content">
         <div class="page-title">
           <h2>Аналитика</h2>
-          <p>Детальный анализ расходов и трендов</p>
+          <p>Детальный анализ расходов</p>
         </div>
 
         <div class="cards">
-          <div class="card"><h3>Средний расход</h3><div class="value">6 081 ₽</div></div>
-          <div class="card"><h3>Тренд</h3><div class="value" style="color: var(--green);">-4.4%</div></div>
-          <div class="card"><h3>Экономия</h3><div class="value" style="color: var(--green);">1 240 ₽</div></div>
-          <div class="card"><h3>Эффективность</h3><div class="value">87%</div></div>
-        </div>
-
-        <div class="pills">
-          <span class="pill active">Обзор</span>
-          <span class="pill">Тренды</span>
-          <span class="pill">Сравнение</span>
-          <span class="pill">Экономия</span>
-        </div>
-
-        <div class="card-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <div><h4>Расходы по категориям</h4><small>Распределение текущих расходов</small></div>
-            </div>
-            <div class="chart">Круговая диаграмма</div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-header">
-              <div><h4>Динамика расходов</h4><small>За последние 7 месяцев</small></div>
-            </div>
-            <div class="chart">Линейный график</div>
-          </div>
+          <div class="card"><h3>Месяц</h3><div class="value" id="anMonthly">—</div></div>
+          <div class="card"><h3>Полгода</h3><div class="value" id="anHalfYear">—</div></div>
+          <div class="card"><h3>Год</h3><div class="value" id="anYear">—</div></div>
+          <div class="card"><h3>Эффективность</h3><div class="value">—</div></div>
         </div>
       </div>
     </div>
   </div>
+
+  <script src="/app.js"></script>
 </body>
 </html>
