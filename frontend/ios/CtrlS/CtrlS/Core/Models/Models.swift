@@ -115,3 +115,27 @@ struct SubscriptionPayload {
     let category: String?
     let nextBillingDate: Date?
 }
+
+struct EmailImportRequest {
+    let email: String?
+    let password: String?
+    let imapServer: String
+    let mailbox: String
+    let limit: Int
+    let useSample: Bool
+    let consentToUsePassword: Bool
+}
+
+struct EmailParsedSubscription: Identifiable {
+    let id = UUID()
+    let service: String
+    let amount: String?
+    let currency: String?
+    let sender: String
+    let subject: String
+}
+
+struct EmailImportResult {
+    let parsed: [EmailParsedSubscription]
+    let created: Int
+}
