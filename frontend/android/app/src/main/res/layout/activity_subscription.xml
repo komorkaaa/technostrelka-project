@@ -48,13 +48,6 @@
                     android:layout_alignParentEnd="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
-
-                    <ImageView
-                        android:id="@+id/icon_search"
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/ic_search" />
-
                     <FrameLayout
                         android:id="@+id/notification"
                         android:layout_width="36dp"
@@ -110,21 +103,26 @@
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
 
-                    <TextView
-                        android:id="@+id/search_hint"
+                    <EditText
+                        android:id="@+id/search_input"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="Поиск..."
-                        android:textColor="#9A9AA0"
+                        android:background="@android:color/transparent"
+                        android:hint="Поиск..."
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="#9A9AA0"
                         android:textSize="14sp"
+                        android:inputType="text"
                         app:layout_constraintStart_toEndOf="@id/search_icon"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <FrameLayout
+                    android:id="@+id/filter_button"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_marginStart="10dp"
@@ -145,6 +143,7 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/chip_all"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:background="@drawable/bg_chip_active"
@@ -157,6 +156,7 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/chip_active"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginStart="8dp"
@@ -170,6 +170,7 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/chip_paused"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginStart="8dp"
@@ -182,92 +183,13 @@
                     android:textColor="@color/text_primary"
                     android:textSize="12sp" />
             </LinearLayout>
-
-            <!-- Карточка подписки: шаблон -->
             <LinearLayout
+                android:id="@+id/subscriptions_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_card_white"
-                android:padding="12dp"
-                android:orientation="horizontal">
+                android:orientation="vertical" />
 
-                <FrameLayout
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_icon_red">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Я"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold" />
-                </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Яндекс Плюс"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/bg_status_active"
-                        android:paddingStart="8dp"
-                        android:paddingEnd="8dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:text="Активна"
-                        android:textSize="11sp"
-                        android:textColor="#1B7F2A" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Подписка на Яндекс Плюс с доступом к..."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="399 ₽"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_purple" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="end">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@drawable/ic_more" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="20 мар."
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-                </LinearLayout>
-            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

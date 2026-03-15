@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SubMonitor</string>
+    <string name="app_name">CtrlS</string>
     <string name="auth_title">Авторизация</string>
     <string name="auth_subtitle">Добро пожаловать</string>
     <string name="auth_tab_login">Вход</string>
