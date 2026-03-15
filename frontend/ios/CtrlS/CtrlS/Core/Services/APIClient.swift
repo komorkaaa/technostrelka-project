@@ -55,6 +55,40 @@ final class APIClient {
         return try decoder.decode(T.self, from: data)
     }
 
+    func requestVoid(
+        _ path: String,
+        method: HTTPMethod = .get,
+        query: [String: String?] = [:],
+        body: Data? = nil
+    ) async throws {
+        var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
+        if !query.isEmpty {
+            components.queryItems = query.compactMap { key, value in
+                guard let value else { return nil }
+                return URLQueryItem(name: key, value: value)
+            }
+        }
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = method.rawValue
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        if let token = tokenProvider() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        guard (200...299).contains(http.statusCode) else {
+            throw APIError(message: parseErrorMessage(from: data) ?? "Ошибка сервера (\(http.statusCode))")
+        }
+    }
+
     private func parseErrorMessage(from data: Data) -> String? {
         guard
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

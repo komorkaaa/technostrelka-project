@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
     @State private var activeSheet: SheetDestination?
     @State private var showLogoutConfirm = false
+    @StateObject private var viewModel = ProfileViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
@@ -11,6 +13,11 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                     profileCard
                     statsRow
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(DS.Typography.caption)
+                            .foregroundStyle(.red)
+                    }
                     settingsSection
                     preferencesSection
                     securitySection
@@ -37,12 +44,14 @@ struct ProfileView: View {
             .sheet(item: $activeSheet) { sheet in
                 PlaceholderView(title: sheet.title)
             }
+            .task(id: session.accessToken) { await viewModel.load() }
         }
     }
 }
 
 #Preview {
     ProfileView()
+        .environmentObject(SessionManager.shared)
 }
 
 private extension ProfileView {
@@ -52,15 +61,15 @@ private extension ProfileView {
                 .fill(DS.ColorToken.accent)
                 .frame(width: 56, height: 56)
                 .overlay(
-                    Text("П")
+                    Text(initials(from: viewModel.profile?.email))
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.white)
                 )
             VStack(alignment: .leading, spacing: 4) {
-                Text("Пётр Иванов")
+                Text(viewModel.profile?.email ?? "—")
                     .font(DS.Typography.headline)
                     .foregroundStyle(DS.ColorToken.textPrimary)
-                Text("petr@example.com")
+                Text(viewModel.profile?.phone ?? "Телефон не указан")
                     .font(DS.Typography.caption)
                     .foregroundStyle(DS.ColorToken.textSecondary)
             }
@@ -77,9 +86,9 @@ private extension ProfileView {
 
     var statsRow: some View {
         HStack(spacing: DS.Spacing.md) {
-            StatMini(title: "Подписок", value: "8")
-            StatMini(title: "В месяц", value: "6.8K")
-            StatMini(title: "Экономия", value: "1.2K")
+            StatMini(title: "Подписок", value: viewModel.stats?.subscriptions ?? "—")
+            StatMini(title: "В месяц", value: viewModel.stats?.monthly ?? "—")
+            StatMini(title: "Экономия", value: viewModel.stats?.savings ?? "—")
         }
     }
 
@@ -152,6 +161,11 @@ private extension ProfileView {
             .font(DS.Typography.caption)
             .foregroundStyle(DS.ColorToken.textSecondary)
             .padding(.top, DS.Spacing.xs)
+    }
+
+    func initials(from email: String?) -> String {
+        guard let email, let first = email.first else { return "?" }
+        return String(first).uppercased()
     }
 }
 
