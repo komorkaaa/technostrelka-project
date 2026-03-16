@@ -125,6 +125,7 @@
                         android:textSize="12sp" />
 
                     <FrameLayout
+                        android:id="@+id/add_subscription_button"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
                         android:layout_alignParentEnd="true"
@@ -143,7 +144,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="6 045 ₽"
+                    android:text="0 ₽"
                     android:textColor="@android:color/white"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -177,7 +178,7 @@
                             android:id="@+id/active_count_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="7"
+                            android:text="0"
                             android:textColor="@android:color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -314,7 +315,7 @@
                             android:id="@+id/subscriptions_count_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="7"
+                            android:text="0"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@color/text_primary" />
@@ -361,7 +362,7 @@
                             android:id="@+id/nearest_days_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="-1 дн."
+                            android:text="-"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@color/text_primary" />

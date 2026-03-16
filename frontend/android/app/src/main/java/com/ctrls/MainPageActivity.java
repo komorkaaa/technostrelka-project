@@ -14,6 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import android.content.SharedPreferences;
 import android.view.LayoutInflater;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +37,18 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import android.app.DatePickerDialog;
+import android.widget.Switch;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.ctrls.api.dto.SubscriptionCreateRequest;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 public class MainPageActivity extends AppCompatActivity {
 
     private static final String PREFS = "auth_prefs";
@@ -43,6 +56,8 @@ public class MainPageActivity extends AppCompatActivity {
 
     private SubscriptionsApi subscriptionsApi;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat uiDate = new SimpleDateFormat("d MMMM", new Locale("ru", "RU"));
+    private final SimpleDateFormat apiDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     private final DecimalFormat moneyFormat = new DecimalFormat("#,###.##");
 
     private List<SubscriptionOut> allSubscriptions = new ArrayList<>();
@@ -66,6 +81,11 @@ public class MainPageActivity extends AppCompatActivity {
             showAllPayments = !showAllPayments;
             renderPayments();
         });
+
+        View addButton = findViewById(R.id.add_subscription_button);
+        if (addButton != null) {
+            addButton.setOnClickListener(v -> openAddSubscriptionSheet());
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_page_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -405,4 +425,134 @@ public class MainPageActivity extends AppCompatActivity {
             container.addView(item);
         }
     }
+    private void openAddSubscriptionSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_add_subscription, null);
+
+        EditText name = view.findViewById(R.id.sub_name);
+        EditText category = view.findViewById(R.id.sub_category);
+        EditText amount = view.findViewById(R.id.sub_amount);
+
+        TextView currencyView = view.findViewById(R.id.sub_currency);
+        TextView periodView = view.findViewById(R.id.sub_period);
+
+        TextView dateValue = view.findViewById(R.id.sub_date_value);
+        Switch dateSwitch = view.findViewById(R.id.sub_date_switch);
+
+        TextView btnCancel = view.findViewById(R.id.btn_cancel);
+        TextView btnSave = view.findViewById(R.id.btn_save);
+
+        String[] currency = new String[] {"RUB"};
+        String[] period = new String[] {"monthly"};
+
+        Calendar selectedDate = Calendar.getInstance();
+        dateValue.setText("Указать дату");
+        dateValue.setEnabled(false);
+        dateValue.setAlpha(0.6f);
+
+        currencyView.setOnClickListener(v -> {
+            String[] options = {"RUB", "USD", "EUR"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Валюта")
+                    .setItems(options, (d, which) -> {
+                        currency[0] = options[which];
+                        currencyView.setText(options[which]);
+                    })
+                    .show();
+        });
+
+        periodView.setOnClickListener(v -> {
+            String[] labels = {"Ежемесячно", "Раз в 6 месяцев", "Ежегодно"};
+            String[] values = {"monthly", "half_year", "yearly"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Период")
+                    .setItems(labels, (d, which) -> {
+                        period[0] = values[which];
+                        periodView.setText(labels[which]);
+                    })
+                    .show();
+        });
+
+        dateSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            dateValue.setEnabled(isChecked);
+            dateValue.setAlpha(isChecked ? 1f : 0.6f);
+            if (!isChecked) {
+                dateValue.setText("Указать дату");
+            } else {
+                dateValue.setText(uiDate.format(selectedDate.getTime()));
+            }
+        });
+
+        dateValue.setOnClickListener(v -> {
+            if (!dateSwitch.isChecked()) return;
+            DatePickerDialog picker = new DatePickerDialog(
+                    this,
+                    (dp, y, m, d) -> {
+                        selectedDate.set(Calendar.YEAR, y);
+                        selectedDate.set(Calendar.MONTH, m);
+                        selectedDate.set(Calendar.DAY_OF_MONTH, d);
+                        dateValue.setText(uiDate.format(selectedDate.getTime()));
+                    },
+                    selectedDate.get(Calendar.YEAR),
+                    selectedDate.get(Calendar.MONTH),
+                    selectedDate.get(Calendar.DAY_OF_MONTH)
+            );
+            picker.show();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSave.setOnClickListener(v -> {
+            String n = name.getText().toString().trim();
+            String c = category.getText().toString().trim();
+            String aStr = amount.getText().toString().trim();
+
+            if (n.isEmpty() || aStr.isEmpty()) {
+                Toast.makeText(this, "Заполните название и сумму", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double a = Double.parseDouble(aStr);
+            String nextDate = dateSwitch.isChecked() ? apiDate.format(selectedDate.getTime()) : null;
+
+            String token = getSharedPreferences(PREFS, MODE_PRIVATE)
+                    .getString(KEY_TOKEN, null);
+
+            if (token == null || token.isEmpty()) {
+                startActivity(new Intent(this, AuthActivity.class));
+                finish();
+                return;
+            }
+
+            SubscriptionCreateRequest req = new SubscriptionCreateRequest(
+                    n,
+                    a,
+                    currency[0],
+                    period[0],
+                    c.isEmpty() ? null : c,
+                    nextDate
+            );
+
+            subscriptionsApi.create("Bearer " + token, req).enqueue(new Callback<SubscriptionOut>() {
+                @Override
+                public void onResponse(Call<SubscriptionOut> call, Response<SubscriptionOut> response) {
+                    if (response.isSuccessful()) {
+                        dialog.dismiss();
+                        loadSubscriptions();
+                    } else {
+                        Toast.makeText(MainPageActivity.this, "Ошибка сохранения", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<SubscriptionOut> call, Throwable t) {
+                    Toast.makeText(MainPageActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        dialog.setContentView(view);
+        dialog.show();
+    }
+
 }
