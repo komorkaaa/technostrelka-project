@@ -105,7 +105,7 @@ function svgLineChart(points, width = 520, height = 220) {
   const coords = points.map((p, i) => {
     const x = pad + (w * i) / Math.max(points.length - 1, 1);
     const y = pad + h - ((p.value - min) / (max - min || 1)) * h;
-    return { x, y };
+    return { x, y, label: p.label, value: p.value };
   });
 
   const gridLines = Array.from({ length: 5 }).map((_, i) => {
@@ -118,6 +118,7 @@ function svgLineChart(points, width = 520, height = 220) {
       ${gridLines.join("")}
       <polyline fill="none" stroke="#8b2cff" stroke-width="3" points="${coords.map(c => `${c.x},${c.y}`).join(" ")}" />
       ${coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#8b2cff"/>`).join("")}
+      ${coords.map(c => `<text x="${c.x}" y="${c.y - 8}" text-anchor="middle" font-size="10" fill="#6b7280">${c.label}</text>`).join("")}
       <text x="${pad}" y="${pad - 8}" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
       <text x="${pad}" y="${height - 6}" font-size="10" fill="#6b7280">${formatMoney(min)}</text>
     </svg>
@@ -144,7 +145,10 @@ function svgBars(data, width = 520, height = 220) {
         const x = pad + i * (barW + 8);
         const barH = (d.value / max) * h;
         const y = pad + (h - barH);
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="#7c3aed" rx="6"></rect>`;
+        return `
+          <rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="#7c3aed" rx="6"></rect>
+          <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>
+        `;
       }).join("")}
       <text x="${pad}" y="${pad - 8}" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
     </svg>
@@ -168,8 +172,15 @@ function svgDonut(data, width = 240, height = 240) {
     const y2 = cy + r * Math.sin(end);
     const large = angle > Math.PI ? 1 : 0;
     const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
+    const mid = start + angle / 2;
+    const lx = cx + (r + 14) * Math.cos(mid);
+    const ly = cy + (r + 14) * Math.sin(mid);
     start = end;
-    return `<path d="${path}" fill="${colors[i % colors.length]}"></path>`;
+
+    return `
+      <path d="${path}" fill="${colors[i % colors.length]}"></path>
+      <text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>
+    `;
   });
 
   return `
