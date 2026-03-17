@@ -1,14 +1,30 @@
-const token = localStorage.getItem("token");
-const notifDays = parseInt(localStorage.getItem("notifDays") || "7", 10);
+const API_BASE = window.API_BASE || "";
+function clampNotifDays(value) {
+  const num = parseInt(value, 10);
+  if (!Number.isFinite(num)) return 7;
+  if (num < 1) return 1;
+  if (num > 30) return 30;
+  return num;
+}
+let notifDays = clampNotifDays(localStorage.getItem("notifDays") || "7");
+localStorage.setItem("notifDays", String(notifDays));
+
+const calendarState = {
+  date: null,
+  subs: [],
+  selectedDate: null
+};
 
 function requireAuth() {
   const page = document.body.dataset.page;
+  const token = localStorage.getItem("token");
   if (!token && page) {
     window.location.href = "/login";
   }
 }
 
 function tokenHeader() {
+  const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -24,11 +40,29 @@ async function apiRequest(method, url, body) {
       payload = JSON.stringify(body);
     }
   }
-  const res = await fetch(url, { method, headers, body: payload });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || res.statusText);
+
+  const fullUrl = API_BASE ? API_BASE + url.replace(/^\/api/, "") : url;
+
+  let res;
+  try {
+    res = await fetch(fullUrl, { method, headers, body: payload });
+  } catch (err) {
+    throw new Error("Не удалось подключиться к серверу. Проверь, что backend запущен.");
   }
+
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = res.statusText;
+    try {
+      const data = JSON.parse(text);
+      detail = data.detail || detail;
+    } catch {}
+    if (Array.isArray(detail)) {
+      detail = detail.map(d => d.msg || d).join(", ");
+    }
+    throw new Error(detail);
+  }
+
   return res.status === 204 ? null : res.json();
 }
 
@@ -37,6 +71,12 @@ const apiPost = (url, body) => apiRequest("POST", url, body);
 const apiPut = (url, body) => apiRequest("PUT", url, body);
 const apiPatch = (url, body) => apiRequest("PATCH", url, body);
 const apiDelete = (url) => apiRequest("DELETE", url);
+
+function parseAmountInput(value) {
+  if (typeof value !== "string") return Number(value);
+  const normalized = value.replace(",", ".").replace(/[^0-9.]/g, "");
+  return Number(normalized);
+}
 
 function formatMoney(value, currency = "RUB") {
   const num = Number(value);
@@ -47,19 +87,35 @@ function formatMoney(value, currency = "RUB") {
   }).format(num);
 }
 
+function isDateOnlyString(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  if (isDateOnlyString(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function formatDate(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
+  const d = parseDate(iso);
+  if (!d) return "";
   return d.toLocaleDateString("ru-RU");
 }
 
 function daysUntil(dateStr) {
   if (!dateStr) return "";
-  const target = new Date(dateStr);
+  const target = parseDate(dateStr);
+  if (!target) return "";
   const now = new Date();
+  if (isDateOnlyString(dateStr)) now.setHours(0, 0, 0, 0);
   const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return `-${Math.abs(diff)} дн.`;
-  if (diff === 0) return "Сегодня";
+  if (diff <= 0) return "Сегодня";
   return `Через ${diff} дн.`;
 }
 
@@ -90,7 +146,11 @@ function nextDateFromNow(period) {
 
 function isPaused(nextDate) {
   if (!nextDate) return false;
-  const diff = (new Date(nextDate) - new Date()) / (1000 * 60 * 60 * 24);
+  const target = parseDate(nextDate);
+  if (!target) return false;
+  const now = new Date();
+  if (isDateOnlyString(nextDate)) now.setHours(0, 0, 0, 0);
+  const diff = (target - now) / (1000 * 60 * 60 * 24);
   return diff > 180;
 }
 
@@ -113,17 +173,24 @@ function svgLineChart(points, width = 520, height = 220) {
     return `<line x1="${pad}" y1="${y}" x2="${pad + w}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 4"/>`;
   });
 
+  const pointLabels = coords.map(c => {
+    const placeBelow = c.y < pad + 14;
+    const y = placeBelow ? c.y + 14 : c.y - 8;
+    return `<text x="${c.x}" y="${y}" text-anchor="middle" font-size="9" fill="#6b7280">${c.label}</text>`;
+  });
+
   return `
     <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%">
       ${gridLines.join("")}
-      <polyline fill="none" stroke="#8b2cff" stroke-width="3" points="${coords.map(c => `${c.x},${c.y}`).join(" ")}" />
+      <polyline fill="none" stroke="#8b2cff" stroke-width="3" points="${coords.map(c => `${c.x},${c.y}`).join(" " )}" />
       ${coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#8b2cff"/>`).join("")}
-      ${coords.map(c => `<text x="${c.x}" y="${c.y - 8}" text-anchor="middle" font-size="10" fill="#6b7280">${c.label}</text>`).join("")}
-      <text x="${pad}" y="${pad - 8}" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
-      <text x="${pad}" y="${height - 6}" font-size="10" fill="#6b7280">${formatMoney(min)}</text>
+      ${pointLabels.join("")}
+      <text x="${width - pad}" y="${pad - 8}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
+      <text x="${width - pad}" y="${height - 6}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(min)}</text>
     </svg>
   `;
 }
+
 
 function svgBars(data, width = 520, height = 220) {
   if (!data.length) return "";
@@ -195,8 +262,33 @@ function svgDonut(data, width = 240, height = 240) {
 async function updateBadge() {
   const badge = document.getElementById("notifBadge");
   if (!badge) return;
-  const data = await apiGet(`/api/notifications/upcoming?days=${notifDays}`);
-  badge.querySelector("span").textContent = data.items.length;
+  try {
+    const data = await apiGet(`/api/notifications/upcoming?days=${notifDays}`);
+    badge.querySelector("span").textContent = data.items.length;
+  } catch {
+    // If backend is unavailable or auth fails, don't break the rest of the UI.
+    badge.querySelector("span").textContent = "0";
+  }
+}
+
+function initNotifBadge() {
+  const badge = document.getElementById("notifBadge");
+  if (!badge || badge.dataset.bound) return;
+  badge.dataset.bound = "1";
+  badge.addEventListener("click", () => {
+    const page = document.body.dataset.page;
+    if (page === "settings") {
+      if (typeof openSettingsTab === "function") {
+        openSettingsTab("tabNotifications");
+        const panel = document.getElementById("tabNotifications");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.location.hash = "#notifications";
+      }
+      return;
+    }
+    window.location.href = "/settings#notifications";
+  });
 }
 
 async function loadHome() {
@@ -293,24 +385,93 @@ async function loadSubscriptions() {
   };
 }
 
-async function loadCalendar() {
-  const subs = await apiGet("/api/subscriptions");
+function renderCalendarList(events) {
+  const list = document.getElementById("calendarUpcoming");
+  const label = document.getElementById("calendarDayLabel");
+  if (!list || !label) return;
+
+  list.innerHTML = "";
+  const selected = calendarState.selectedDate;
+  if (selected) {
+    label.textContent = `Подписки на ${selected.toLocaleDateString("ru-RU")}`;
+    const items = events.filter(e => e.date.toDateString() === selected.toDateString());
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "list-item";
+      empty.textContent = "Нет списаний на эту дату";
+      list.appendChild(empty);
+      return;
+    }
+
+    items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.innerHTML = `
+        <div class="left">
+          <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
+          <div>
+            <div>${item.name}</div>
+            <small>${item.date.toLocaleDateString("ru-RU")}</small>
+          </div>
+        </div>
+        <strong>${formatMoney(item.amount, item.currency)}</strong>
+      `;
+      list.appendChild(row);
+    });
+    return;
+  }
+
+  label.textContent = "Ближайшие 7 дней";
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = addDays(start, 7);
+  const upcoming = events
+    .filter(e => e.date >= start && e.date <= end)
+    .sort((a, b) => a.date - b.date);
+
+  if (!upcoming.length) {
+    const empty = document.createElement("div");
+    empty.className = "list-item";
+    empty.textContent = "Нет ближайших списаний";
+    list.appendChild(empty);
+    return;
+  }
+
+  upcoming.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "list-item";
+    row.innerHTML = `
+      <div class="left">
+        <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
+        <div>
+          <div>${item.name}</div>
+          <small>${item.date.toLocaleDateString("ru-RU")}</small>
+        </div>
+      </div>
+      <strong>${formatMoney(item.amount, item.currency)}</strong>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderCalendar() {
   const monthLabel = document.getElementById("calendarMonth");
   const grid = document.getElementById("calendarGrid");
-  const list = document.getElementById("calendarUpcoming");
+  if (!monthLabel || !grid) return;
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const base = calendarState.date || new Date();
+  const year = base.getFullYear();
+  const month = base.getMonth();
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
 
   monthLabel.textContent = firstDay.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 
   const events = [];
-  subs.forEach(sub => {
+  calendarState.subs.forEach(sub => {
     if (!sub.next_billing_date) return;
-    let d = new Date(sub.next_billing_date);
+    let d = parseDate(sub.next_billing_date);
+      if (!d) return;
     while (d < firstDay) {
       if (sub.billing_period === "monthly") d = addMonths(d, 1);
       else if (sub.billing_period === "yearly") d = addYears(d, 1);
@@ -339,33 +500,56 @@ async function loadCalendar() {
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const cellDate = new Date(year, month, day);
     const hasEvent = events.some(e => e.date.toDateString() === cellDate.toDateString());
+    const isSelected = calendarState.selectedDate
+      ? calendarState.selectedDate.toDateString() === cellDate.toDateString()
+      : false;
     const cell = document.createElement("div");
-    cell.className = `calendar-day ${hasEvent ? "has-event" : ""}`;
+    cell.className = `calendar-day ${hasEvent ? "has-event" : ""} ${isSelected ? "selected" : ""}`.trim();
     cell.innerHTML = `<div class="num">${day}</div>${hasEvent ? '<div class="dot"></div>' : ""}`;
+    cell.addEventListener("click", () => {
+      calendarState.selectedDate = cellDate;
+      renderCalendar();
+    });
     grid.appendChild(cell);
   }
 
-  list.innerHTML = "";
-  const upcoming = events
-    .filter(e => e.date >= new Date())
-    .sort((a, b) => a.date - b.date)
-    .slice(0, 7);
+  renderCalendarList(events);
+}
 
-  upcoming.forEach(item => {
-    const row = document.createElement("div");
-    row.className = "list-item";
-    row.innerHTML = `
-      <div class="left">
-        <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
-        <div>
-          <div>${item.name}</div>
-          <small>${item.date.toLocaleDateString("ru-RU")}</small>
-        </div>
-      </div>
-      <strong>${formatMoney(item.amount, item.currency)}</strong>
-    `;
-    list.appendChild(row);
-  });
+async function loadCalendar() {
+  const subs = await apiGet("/api/subscriptions");
+  calendarState.subs = subs;
+  if (!calendarState.date) {
+    const now = new Date();
+    calendarState.date = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  const prevBtn = document.getElementById("calendarPrev");
+  const nextBtn = document.getElementById("calendarNext");
+  const clearBtn = document.getElementById("calendarClearDay");
+  if (prevBtn && !prevBtn.dataset.bound) {
+    prevBtn.dataset.bound = "1";
+    prevBtn.addEventListener("click", () => {
+      calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() - 1, 1);
+      renderCalendar();
+    });
+  }
+  if (nextBtn && !nextBtn.dataset.bound) {
+    nextBtn.dataset.bound = "1";
+    nextBtn.addEventListener("click", () => {
+      calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() + 1, 1);
+      renderCalendar();
+    });
+  }
+  if (clearBtn && !clearBtn.dataset.bound) {
+    clearBtn.dataset.bound = "1";
+    clearBtn.addEventListener("click", () => {
+      calendarState.selectedDate = null;
+      renderCalendar();
+    });
+  }
+
+  renderCalendar();
 }
 
 async function loadAnalytics() {
@@ -406,7 +590,10 @@ async function loadSettings() {
 
   document.getElementById("notifDays").value = String(notifDays);
   document.getElementById("saveNotifications").addEventListener("click", async () => {
-    const days = parseInt(document.getElementById("notifDays").value, 10);
+    const input = document.getElementById("notifDays");
+    const days = clampNotifDays(input.value);
+    input.value = String(days);
+    notifDays = days;
     localStorage.setItem("notifDays", String(days));
     await renderNotificationsList(days);
     await updateBadge();
@@ -428,14 +615,24 @@ async function loadSettings() {
 
   const tabs = document.querySelectorAll(".tab");
   const panels = document.querySelectorAll(".tab-panel");
+  const setActive = (targetId) => {
+    tabs.forEach(t => t.classList.remove("active"));
+    panels.forEach(p => p.classList.remove("active"));
+    const tab = Array.from(tabs).find(t => t.dataset.target === targetId);
+    if (tab) tab.classList.add("active");
+    const panel = document.getElementById(targetId);
+    if (panel) panel.classList.add("active");
+  };
+
+  window.openSettingsTab = setActive;
+
   tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      panels.forEach(p => p.classList.remove("active"));
-      tab.classList.add("active");
-      document.getElementById(tab.dataset.target).classList.add("active");
-    });
+    tab.addEventListener("click", () => setActive(tab.dataset.target));
   });
+
+  if (window.location.hash === "#notifications") {
+    setActive("tabNotifications");
+  }
 }
 
 async function renderNotificationsList(days) {
@@ -490,9 +687,22 @@ async function initModal() {
   document.getElementById("modalBackdrop").addEventListener("click", closeModal);
 
   document.getElementById("saveSubscription").addEventListener("click", async () => {
+    const name = document.getElementById("subName").value.trim();
+    const amountRaw = document.getElementById("subAmount").value.trim();
+    const amount = parseAmountInput(amountRaw);
+
+    if (!name) {
+      alert("Укажи название подписки");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Сумма должна быть больше 0");
+      return;
+    }
+
     const payload = {
-      name: document.getElementById("subName").value.trim(),
-      amount: Number(document.getElementById("subAmount").value),
+      name,
+      amount,
       currency: document.getElementById("subCurrency").value.trim() || "RUB",
       billing_period: document.getElementById("subPeriod").value,
       category: document.getElementById("subCategory").value.trim() || null,
@@ -500,17 +710,21 @@ async function initModal() {
     };
 
     const modal = document.getElementById("subscriptionModal");
-    if (modal.dataset.mode === "edit") {
-      await apiPut(`/api/subscriptions/${modal.dataset.id}`, payload);
-    } else {
-      await apiPost("/api/subscriptions", payload);
-    }
-    closeModal();
+    try {
+      if (modal.dataset.mode === "edit") {
+        await apiPut(`/api/subscriptions/${modal.dataset.id}`, payload);
+      } else {
+        await apiPost("/api/subscriptions", payload);
+      }
+      closeModal();
 
-    const page = document.body.dataset.page;
-    if (page === "subscriptions") await loadSubscriptions();
-    if (page === "calendar") await loadCalendar();
-    if (page === "home") await loadHome();
+      const page = document.body.dataset.page;
+      if (page === "subscriptions") await loadSubscriptions();
+      if (page === "calendar") await loadCalendar();
+      if (page === "home") await loadHome();
+    } catch (err) {
+      alert(err.message);
+    }
   });
 }
 
@@ -519,8 +733,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page;
 
   if (page) {
-    await updateBadge();
+    // Init modal first so the Add button works even if API calls fail.
     await initModal();
+    initNotifBadge();
+    await updateBadge();
   }
 
   if (page === "home") await loadHome();

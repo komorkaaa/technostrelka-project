@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
@@ -49,12 +49,19 @@
         <div class="panel">
           <div class="calendar-header">
             <h4 id="calendarMonth">—</h4>
+            <div class="pills">
+              <button class="pill" id="calendarPrev">‹</button>
+              <button class="pill" id="calendarNext">›</button>
+            </div>
           </div>
           <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
         <div class="panel">
-          <div class="panel-header"><h4>Ближайшие 7 дней</h4></div>
+          <div class="panel-header">
+            <h4 id="calendarDayLabel">Ближайшие 7 дней</h4>
+            <button class="pill" id="calendarClearDay">Сброс</button>
+          </div>
           <div class="list" id="calendarUpcoming"></div>
         </div>
       </div>
