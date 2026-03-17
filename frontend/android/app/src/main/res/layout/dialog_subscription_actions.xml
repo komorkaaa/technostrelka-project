@@ -104,7 +104,7 @@
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_chip"
+            android:background="@drawable/bg_category"
             android:gravity="center"
             android:text="Поставить на паузу"
             android:textColor="@color/primary_purple"
@@ -116,10 +116,10 @@
             android:layout_height="40dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_warning"
+            android:background="@drawable/bg_category_badge"
             android:gravity="center"
             android:text="Удалить"
-            android:textColor="@color/primary_pink"
+            android:textColor="@color/primary_purple"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>
