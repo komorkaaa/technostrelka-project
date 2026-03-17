@@ -453,6 +453,9 @@ a { color: inherit; text-decoration: none; }
   border-color: #c7b5ff;
   background: #f7f2ff;
 }
+.calendar-day.selected {
+  box-shadow: 0 0 0 2px #7c3aed inset;
+}
 .calendar-day .dot {
   width: 8px;
   height: 8px;
