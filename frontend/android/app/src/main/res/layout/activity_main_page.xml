@@ -419,7 +419,7 @@
 
             <Space
                 android:layout_width="1dp"
-                android:layout_height="20dp" />
+                android:layout_height="15dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

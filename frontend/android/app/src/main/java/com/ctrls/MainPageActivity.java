@@ -415,8 +415,9 @@ public class MainPageActivity extends AppCompatActivity {
             count.setText(String.valueOf(entry.getValue()));
             name.setText(entry.getKey());
 
+            int cardSize = getResources().getDimensionPixelSize(R.dimen.category_card_size);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                    0, cardSize, 1f);
             if (i < limit - 1) {
                 lp.setMarginEnd(10);
             }

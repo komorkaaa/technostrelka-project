@@ -20,12 +20,15 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.CheckBox;
 import android.widget.TextView;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
 import com.ctrls.api.ApiClient;
 import com.ctrls.api.SubscriptionsApi;
 import com.ctrls.api.dto.SubscriptionOut;
+import com.ctrls.api.dto.SubscriptionUpdateRequest;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -177,8 +180,7 @@ public class SubscriptionActivity extends AppCompatActivity {
         Date today = truncateTime(new Date());
 
         for (SubscriptionOut s : allSubs) {
-            Date next = parseDate(s.next_billing_date);
-            if (next != null && !next.before(today)) active++;
+            if (isActive(s, today)) active++;
             else paused++;
         }
 
@@ -205,8 +207,7 @@ public class SubscriptionActivity extends AppCompatActivity {
         Date today = truncateTime(new Date());
 
         for (SubscriptionOut s : allSubs) {
-            Date next = parseDate(s.next_billing_date);
-            boolean isActive = next != null && !next.before(today);
+            boolean isActive = isActive(s, today);
             if (currentTab == 1 && !isActive) continue;
             if (currentTab == 2 && isActive) continue;
 
@@ -255,7 +256,7 @@ public class SubscriptionActivity extends AppCompatActivity {
             name.setText(s.name);
 
             Date next = parseDate(s.next_billing_date);
-            boolean isActive = next != null && !next.before(today);
+            boolean isActive = isActive(s, today);
             status.setText(isActive ? "Активна" : "На паузе");
             status.setBackgroundResource(isActive ? R.drawable.bg_status_active : R.drawable.bg_soft_purple);
             status.setTextColor(isActive ? getColor(R.color.text_primary) : getColor(R.color.primary_purple));
@@ -268,6 +269,11 @@ public class SubscriptionActivity extends AppCompatActivity {
                 date.setText(viewDate.format(next));
             } else {
                 date.setText("—");
+            }
+
+            ImageView menu = item.findViewById(R.id.sub_menu);
+            if (menu != null) {
+                menu.setOnClickListener(v -> showActionsDialog(s));
             }
 
             container.addView(item);
@@ -359,6 +365,135 @@ public class SubscriptionActivity extends AppCompatActivity {
         String cur = (currency == null || currency.isEmpty()) ? "RUB" : currency;
         String symbol = "RUB".equalsIgnoreCase(cur) ? "₽" : cur;
         return amount + " " + symbol;
+    }
+
+    private void showActionsDialog(SubscriptionOut s) {
+        String token = getTokenOrRedirect();
+        if (token == null) return;
+
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_subscription_actions, null);
+
+        TextView icon = view.findViewById(R.id.dialog_sub_icon);
+        TextView name = view.findViewById(R.id.dialog_sub_name);
+        TextView status = view.findViewById(R.id.dialog_sub_status);
+        TextView date = view.findViewById(R.id.dialog_sub_date);
+        TextView category = view.findViewById(R.id.dialog_sub_category);
+        TextView amount = view.findViewById(R.id.dialog_sub_amount);
+        TextView nextDate = view.findViewById(R.id.dialog_sub_next_date);
+
+        TextView actionPause = view.findViewById(R.id.action_pause);
+        TextView actionDelete = view.findViewById(R.id.action_delete);
+
+        String first = s.name != null && s.name.length() > 0 ? s.name.substring(0, 1).toUpperCase() : "?";
+        icon.setText(first);
+        name.setText(s.name);
+
+        Date next = parseDate(s.next_billing_date);
+        if (next != null) date.setText(viewDate.format(next));
+        else date.setText("—");
+
+        boolean paused = isPaused(s);
+        status.setText(paused ? "На паузе" : "Активна");
+        status.setBackgroundResource(paused ? R.drawable.bg_soft_purple : R.drawable.bg_status_active);
+        status.setTextColor(paused ? getColor(R.color.primary_purple) : getColor(R.color.text_primary));
+
+        category.setText("Категория: " + (s.category == null ? "Без категории" : s.category));
+        amount.setText("Сумма: " + formatMoney(s.amount, s.currency));
+        nextDate.setText("Следующее списание: " + (s.next_billing_date == null ? "—" : s.next_billing_date));
+
+        actionPause.setText(paused ? "Возобновить" : "Поставить на паузу");
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+
+        actionPause.setOnClickListener(v -> {
+            dialog.dismiss();
+            updateSubscriptionStatus(token, s.id, paused ? "active" : "paused");
+        });
+
+        actionDelete.setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmDelete(token, s.id);
+        });
+
+        dialog.show();
+    }
+
+    private boolean isPaused(SubscriptionOut s) {
+        if (s.status != null && !s.status.isEmpty()) {
+            return "paused".equalsIgnoreCase(s.status);
+        }
+        Date next = parseDate(s.next_billing_date);
+        Date today = truncateTime(new Date());
+        return next == null || next.before(today);
+    }
+
+    private boolean isActive(SubscriptionOut s, Date today) {
+        if (s.status != null && !s.status.isEmpty()) {
+            return "active".equalsIgnoreCase(s.status);
+        }
+        Date next = parseDate(s.next_billing_date);
+        return next != null && !next.before(today);
+    }
+
+    private String getTokenOrRedirect() {
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String token = prefs.getString(KEY_TOKEN, null);
+        if (token == null || token.isEmpty()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return null;
+        }
+        return token;
+    }
+
+    private void updateSubscriptionStatus(String token, int subscriptionId, String status) {
+        SubscriptionUpdateRequest request = new SubscriptionUpdateRequest(status);
+        subscriptionsApi.update("Bearer " + token, subscriptionId, request)
+                .enqueue(new Callback<SubscriptionOut>() {
+                    @Override
+                    public void onResponse(Call<SubscriptionOut> call, Response<SubscriptionOut> response) {
+                        if (response.isSuccessful()) {
+                            loadSubscriptions();
+                        } else {
+                            Toast.makeText(SubscriptionActivity.this, "Не удалось обновить", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<SubscriptionOut> call, Throwable t) {
+                        Toast.makeText(SubscriptionActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void confirmDelete(String token, int subscriptionId) {
+        new AlertDialog.Builder(this)
+                .setTitle("Удалить подписку?")
+                .setMessage("Подписка будет удалена полностью.")
+                .setPositiveButton("Удалить", (d, w) -> deleteSubscription(token, subscriptionId))
+                .setNegativeButton("Отмена", null)
+                .show();
+    }
+
+    private void deleteSubscription(String token, int subscriptionId) {
+        subscriptionsApi.delete("Bearer " + token, subscriptionId)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (response.isSuccessful()) {
+                            loadSubscriptions();
+                        } else {
+                            Toast.makeText(SubscriptionActivity.this, "Не удалось удалить", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Toast.makeText(SubscriptionActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
 }
