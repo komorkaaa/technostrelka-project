@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CtrlS — Вход</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="auth-page">
+  <div class="auth-wrap">
+    <div class="brand" style="margin-bottom:16px;">
+      <h1>CtrlS</h1>
+      <span>Монитор подписок</span>
+    </div>
+
+    <div class="auth-card">
+      <div>
+        <h2>Вход</h2>
+        <p>Войди, чтобы работать с данными</p>
+      </div>
+
+      <form id="loginForm" class="settings-form">
+        <div><label>Email</label><input id="loginEmail" type="email" required /></div>
+        <div><label>Пароль</label><input id="loginPassword" type="password" required /></div>
+        <div class="toolbar">
+          <button class="pill active" type="submit">Войти</button>
+          <button class="pill" type="button" id="toRegister">Регистрация</button>
+        </div>
+        <div id="loginStatus" class="hint"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/login.js"></script>
+</body>
+</html>

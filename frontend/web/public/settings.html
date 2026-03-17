@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CtrlS — Настройки</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body data-page="settings">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>CtrlS</h1>
+        <span>Монитор подписок</span>
+      </div>
+      <nav class="nav">
+        <a href="/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4V14H9v8H5a2 2 0 0 1-2-2z" stroke-width="2" />
+          </svg>Главная</a>
+        <a href="/subscriptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2" />
+            <path d="M3 10h18" stroke-width="2" />
+          </svg>Подписки</a>
+        <a href="/calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" stroke-width="2" />
+          </svg>Календарь</a>
+        <a href="/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 20h18" stroke-width="2" />
+            <path d="M7 20V10M12 20V4M17 20v-6" stroke-width="2" />
+          </svg>Аналитика</a>
+        <a class="active" href="/settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke-width="2" />
+            <path
+              d="M4 12a8 8 0 0 1 .2-1.8l-1.6-1.2 2-3.4 2 .6A8 8 0 0 1 9 4l.6-2h5l.6 2a8 8 0 0 1 2.4 1.4l2-.6 2 3.4-1.6 1.2A8 8 0 0 1 20 12c0 .6-.1 1.2-.2 1.8l1.6 1.2-2 3.4-2-.6A8 8 0 0 1 15 20l-.6 2h-5l-.6-2A8 8 0 0 1 6.6 18l-2 .6-2-3.4 1.6-1.2A8 8 0 0 1 4 12z"
+              stroke-width="1.6" />
+          </svg>Настройки</a>
+      </nav>
+      <div class="cta">
+        <button class="button-primary" id="openAddSubscription">+ Добавить подписку</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16">
+            <circle cx="11" cy="11" r="7" stroke-width="2" />
+            <path d="M20 20l-3.5-3.5" stroke-width="2" />
+          </svg>
+          <input type="text" placeholder="Поиск подписок..." />
+        </div>
+        <div class="top-actions">
+          <div class="badge" id="notifBadge">🔔<span>0</span></div>
+          <a class="avatar" href="/settings" title="Профиль">П</a>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="page-title">
+          <h2>Настройки</h2>
+          <p>Профиль и безопасность</p>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-target="tabProfile">Профиль</button>
+          <button class="tab" data-target="tabNotifications">Уведомления</button>
+          <button class="tab" data-target="tabPayment">Оплата</button>
+          <button class="tab" data-target="tabSecurity">Безопасность</button>
+        </div>
+
+
+        <div class="panel tab-panel active" id="tabProfile">
+          <div class="panel-header">
+            <h4>Профиль</h4>
+          </div>
+          <div class="settings-form">
+            <div><label>Email</label><input id="setEmail" type="email" /></div>
+            <div><label>Телефон</label><input id="setPhone" type="tel" /></div>
+            <button class="button-primary" id="saveProfile">Сохранить</button>
+          </div>
+        </div>
+
+        <div class="panel tab-panel" id="tabNotifications">
+          <div class="panel-header">
+            <h4>Уведомления</h4>
+          </div>
+          <div class="settings-form">
+            <div><label>Показывать списания за (дней)</label><input id="notifDays" type="number" min="1" max="30" />
+            </div>
+            <button class="button-primary" id="saveNotifications">Сохранить</button>
+          </div>
+          <div class="list" id="notifList"></div>
+        </div>
+
+        <div class="panel tab-panel" id="tabPayment">
+          <div class="panel-header">
+            <h4>Оплата</h4>
+          </div>
+          <p>Добавь здесь платёжный метод (заглушка).</p>
+        </div>
+
+        <div class="panel tab-panel" id="tabSecurity">
+          <div class="panel-header">
+            <h4>Безопасность</h4>
+          </div>
+          <div class="settings-form">
+            <div><label>Текущий пароль</label><input id="currentPassword" type="password" /></div>
+            <div><label>Новый пароль</label><input id="newPassword" type="password" /></div>
+            <button class="button-primary" id="changePassword">Сменить пароль</button>
+          </div>
+        </div>
+
+        <button class="pill danger" id="logoutBtn">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop"></div>
+  <div id="subscriptionModal" class="modal">
+    <div class="modal-card">
+      <div class="panel-header">
+        <h4>Подписка</h4>
+        <button class="pill" id="closeModal">Закрыть</button>
+      </div>
+      <div class="settings-form">
+        <div><label>Название</label><input id="subName" type="text" /></div>
+        <div class="row">
+          <div><label>Сумма</label><input id="subAmount" type="number" step="0.01" /></div>
+          <div><label>Валюта</label><input id="subCurrency" type="text" value="RUB" /></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Период</label>
+            <select id="subPeriod">
+              <option value="monthly">Ежемесячно</option>
+              <option value="weekly">Еженедельно</option>
+              <option value="yearly">Ежегодно</option>
+            </select>
+          </div>
+          <div><label>Категория</label><input id="subCategory" type="text" /></div>
+        </div>
+        <div><label>Следующая дата списания</label><input id="subNextDate" type="date" /></div>
+        <button class="button-primary" id="saveSubscription">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+
+</html>

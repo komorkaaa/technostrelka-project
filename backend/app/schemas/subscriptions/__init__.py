@@ -27,10 +27,12 @@ class SubscriptionUpdate(BaseModel):
     billing_period: Optional[str] = Field(default=None, min_length=1, max_length=20)
     category: Optional[str] = Field(default=None, max_length=100)
     next_billing_date: Optional[date] = None
+    status: Optional[str] = Field(default=None, min_length=1, max_length=20)
 
 
 class SubscriptionOut(SubscriptionBase):
     id: int
+    status: str
     created_at: datetime
     updated_at: datetime
 
