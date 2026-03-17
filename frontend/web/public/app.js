@@ -230,6 +230,7 @@ function svgDonut(data, width = 240, height = 240) {
   let start = 0;
   const colors = ["#8b2cff", "#2563eb", "#16a34a", "#f97316", "#ef4444", "#0ea5e9"];
 
+  const showLabels = data.length > 1;
   const arcs = data.map((d, i) => {
     const angle = (d.value / total) * Math.PI * 2;
     const end = start + angle;
@@ -246,7 +247,7 @@ function svgDonut(data, width = 240, height = 240) {
 
     return `
       <path d="${path}" fill="${colors[i % colors.length]}"></path>
-      <text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>
+      ${showLabels ? `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>` : ""}
     `;
   });
 
