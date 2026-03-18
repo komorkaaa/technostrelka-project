@@ -1,5 +1,6 @@
 package com.ctrls;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,6 +12,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.ctrls.api.dto.UpcomingNotificationItem;
+import com.ctrls.api.dto.UpcomingNotificationsResponse;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import android.content.SharedPreferences;
@@ -27,8 +30,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.ctrls.api.ApiClient;
 import com.ctrls.api.SubscriptionsApi;
+import com.ctrls.api.NotificationsApi;
 import com.ctrls.api.dto.SubscriptionOut;
 import com.ctrls.api.dto.SubscriptionUpdateRequest;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,7 +74,10 @@ public class SubscriptionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_subscription);
-
+        View bell = findViewById(R.id.notification);
+        if (bell != null) {
+            bell.setOnClickListener(v -> openNotificationsBottomSheet());
+        }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.subscription_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
@@ -143,13 +151,8 @@ public class SubscriptionActivity extends AppCompatActivity {
     }
 
     private void loadSubscriptions() {
-        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        String token = prefs.getString(KEY_TOKEN, null);
-        if (token == null || token.isEmpty()) {
-            startActivity(new Intent(this, AuthActivity.class));
-            finish();
-            return;
-        }
+        String token = getTokenOrRedirect();
+        if (token == null) return;
 
         subscriptionsApi.list("Bearer " + token).enqueue(new Callback<List<SubscriptionOut>>() {
             @Override
@@ -409,7 +412,11 @@ public class SubscriptionActivity extends AppCompatActivity {
 
         actionPause.setOnClickListener(v -> {
             dialog.dismiss();
-            updateSubscriptionStatus(token, s.id, paused ? "active" : "paused");
+            if (paused) {
+                resumeSubscriptionWithDate(token, s.id);
+            } else {
+                pauseSubscription(token, s.id);
+            }
         });
 
         actionDelete.setOnClickListener(v -> {
@@ -421,18 +428,12 @@ public class SubscriptionActivity extends AppCompatActivity {
     }
 
     private boolean isPaused(SubscriptionOut s) {
-        if (s.status != null && !s.status.isEmpty()) {
-            return "paused".equalsIgnoreCase(s.status);
-        }
         Date next = parseDate(s.next_billing_date);
         Date today = truncateTime(new Date());
         return next == null || next.before(today);
     }
 
     private boolean isActive(SubscriptionOut s, Date today) {
-        if (s.status != null && !s.status.isEmpty()) {
-            return "active".equalsIgnoreCase(s.status);
-        }
         Date next = parseDate(s.next_billing_date);
         return next != null && !next.before(today);
     }
@@ -448,8 +449,8 @@ public class SubscriptionActivity extends AppCompatActivity {
         return token;
     }
 
-    private void updateSubscriptionStatus(String token, int subscriptionId, String status) {
-        SubscriptionUpdateRequest request = new SubscriptionUpdateRequest(status);
+    private void pauseSubscription(String token, int subscriptionId) {
+        SubscriptionUpdateRequest request = new SubscriptionUpdateRequest(null); // пауза = null
         subscriptionsApi.update("Bearer " + token, subscriptionId, request)
                 .enqueue(new Callback<SubscriptionOut>() {
                     @Override
@@ -457,7 +458,16 @@ public class SubscriptionActivity extends AppCompatActivity {
                         if (response.isSuccessful()) {
                             loadSubscriptions();
                         } else {
-                            Toast.makeText(SubscriptionActivity.this, "Не удалось обновить", Toast.LENGTH_SHORT).show();
+                            String body = "";
+                            try {
+                                if (response.errorBody() != null) {
+                                    body = response.errorBody().string();
+                                }
+                            } catch (Exception ignored) { }
+
+                            Toast.makeText(SubscriptionActivity.this,
+                                    "Ошибка: " + response.code() + " " + body,
+                                    Toast.LENGTH_LONG).show();
                         }
                     }
 
@@ -466,6 +476,45 @@ public class SubscriptionActivity extends AppCompatActivity {
                         Toast.makeText(SubscriptionActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void resumeSubscriptionWithDate(String token, int subscriptionId) {
+        Calendar selectedDate = Calendar.getInstance();
+
+        DatePickerDialog picker = new DatePickerDialog(
+                this,
+                (dp, y, m, d) -> {
+                    selectedDate.set(Calendar.YEAR, y);
+                    selectedDate.set(Calendar.MONTH, m);
+                    selectedDate.set(Calendar.DAY_OF_MONTH, d);
+
+                    String nextDate = dateFormat.format(selectedDate.getTime());
+
+                    SubscriptionUpdateRequest request = new SubscriptionUpdateRequest(nextDate);
+                    subscriptionsApi.update("Bearer " + token, subscriptionId, request)
+                            .enqueue(new Callback<SubscriptionOut>() {
+                                @Override
+                                public void onResponse(Call<SubscriptionOut> call, Response<SubscriptionOut> response) {
+                                    if (response.isSuccessful()) {
+                                        loadSubscriptions();
+                                    } else {
+                                        Toast.makeText(SubscriptionActivity.this, "Не удалось возобновить", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<SubscriptionOut> call, Throwable t) {
+                                    Toast.makeText(SubscriptionActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                },
+                selectedDate.get(Calendar.YEAR),
+                selectedDate.get(Calendar.MONTH),
+                selectedDate.get(Calendar.DAY_OF_MONTH)
+        );
+
+        picker.getDatePicker().setMinDate(System.currentTimeMillis());
+        picker.show();
     }
 
     private void confirmDelete(String token, int subscriptionId) {
@@ -495,5 +544,71 @@ public class SubscriptionActivity extends AppCompatActivity {
                     }
                 });
     }
+    private void openNotificationsBottomSheet() {
+        SharedPreferences prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE);
+        String token = prefs.getString("access_token", null);
+        if (token == null || token.isEmpty()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
 
+        NotificationsApi api = ApiClient.getRetrofit().create(NotificationsApi.class);
+
+        api.upcoming("Bearer " + token, 3).enqueue(new retrofit2.Callback<UpcomingNotificationsResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<UpcomingNotificationsResponse> call,
+                                   retrofit2.Response<UpcomingNotificationsResponse> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getApplicationContext(), "Ошибка загрузки", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                BottomSheetDialog dialog = new BottomSheetDialog(SubscriptionActivity.this);
+                View view = LayoutInflater.from(SubscriptionActivity.this)
+                        .inflate(R.layout.bottomsheet_upcoming_notifications, null);
+
+                LinearLayout container = view.findViewById(R.id.bs_notifications_container);
+
+                if (response.body().items == null || response.body().items.isEmpty()) {
+                    TextView empty = new TextView(SubscriptionActivity.this);
+                    empty.setText("Нет списаний в ближайшие 3 дня");
+                    empty.setTextColor(getColor(R.color.text_secondary));
+                    empty.setTextSize(12);
+                    container.addView(empty);
+                } else {
+                    for (UpcomingNotificationItem item : response.body().items) {
+                        View row = LayoutInflater.from(SubscriptionActivity.this)
+                                .inflate(R.layout.item_calendar_payment, container, false);
+
+                        TextView icon = row.findViewById(R.id.pay_icon_text);
+                        TextView name = row.findViewById(R.id.pay_name);
+                        TextView subtitle = row.findViewById(R.id.pay_subtitle);
+                        TextView amount = row.findViewById(R.id.pay_amount);
+                        TextView date = row.findViewById(R.id.pay_date);
+
+                        String first = item.name != null && item.name.length() > 0 ? item.name.substring(0,1).toUpperCase() : "?";
+                        icon.setText(first);
+                        name.setText(item.name);
+
+                        int d = item.days_until;
+                        subtitle.setText(d == 0 ? "Сегодня" : (d == 1 ? "Завтра" : ("Через " + d + " дн.")));
+
+                        amount.setText(item.amount + " " + (item.currency == null ? "RUB" : item.currency));
+                        date.setText(item.next_billing_date == null ? "—" : item.next_billing_date);
+
+                        container.addView(row);
+                    }
+                }
+
+                dialog.setContentView(view);
+                dialog.show();
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<UpcomingNotificationsResponse> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Ошибка сети", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 }

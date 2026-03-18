@@ -1,9 +1,9 @@
 package com.ctrls.api.dto;
 
 public class SubscriptionUpdateRequest {
-    public String status;
+    public String next_billing_date;
 
-    public SubscriptionUpdateRequest(String status) {
-        this.status = status;
+    public SubscriptionUpdateRequest(String next_billing_date) {
+        this.next_billing_date = next_billing_date;
     }
 }

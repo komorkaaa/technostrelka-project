@@ -17,9 +17,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.ctrls.api.dto.UpcomingNotificationItem;
+import com.ctrls.api.dto.UpcomingNotificationsResponse;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.ctrls.api.ApiClient;
+import com.ctrls.api.NotificationsApi;
 import com.ctrls.api.SubscriptionsApi;
 import com.ctrls.api.dto.SubscriptionOut;
 
@@ -59,7 +62,10 @@ public class CalendarActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_calendar);
-
+        View bell = findViewById(R.id.notification);
+        if (bell != null) {
+            bell.setOnClickListener(v -> openNotificationsBottomSheet());
+        }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.calendar_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
@@ -428,5 +434,73 @@ public class CalendarActivity extends AppCompatActivity {
         }
         int size = (totalWidth - (marginPx * 2 * 7)) / 7;
         return Math.max(size, dp(36));
+    }
+
+    private void openNotificationsBottomSheet() {
+        SharedPreferences prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE);
+        String token = prefs.getString("access_token", null);
+        if (token == null || token.isEmpty()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
+
+        NotificationsApi api = ApiClient.getRetrofit().create(NotificationsApi.class);
+
+        api.upcoming("Bearer " + token, 3).enqueue(new retrofit2.Callback<UpcomingNotificationsResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<UpcomingNotificationsResponse> call,
+                                   retrofit2.Response<UpcomingNotificationsResponse> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getApplicationContext(), "Ошибка загрузки", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                BottomSheetDialog dialog = new BottomSheetDialog(CalendarActivity.this);
+                View view = LayoutInflater.from(CalendarActivity.this)
+                        .inflate(R.layout.bottomsheet_upcoming_notifications, null);
+
+                LinearLayout container = view.findViewById(R.id.bs_notifications_container);
+
+                if (response.body().items == null || response.body().items.isEmpty()) {
+                    TextView empty = new TextView(CalendarActivity.this);
+                    empty.setText("Нет списаний в ближайшие 3 дня");
+                    empty.setTextColor(getColor(R.color.text_secondary));
+                    empty.setTextSize(12);
+                    container.addView(empty);
+                } else {
+                    for (UpcomingNotificationItem item : response.body().items) {
+                        View row = LayoutInflater.from(CalendarActivity.this)
+                                .inflate(R.layout.item_calendar_payment, container, false);
+
+                        TextView icon = row.findViewById(R.id.pay_icon_text);
+                        TextView name = row.findViewById(R.id.pay_name);
+                        TextView subtitle = row.findViewById(R.id.pay_subtitle);
+                        TextView amount = row.findViewById(R.id.pay_amount);
+                        TextView date = row.findViewById(R.id.pay_date);
+
+                        String first = item.name != null && item.name.length() > 0 ? item.name.substring(0,1).toUpperCase() : "?";
+                        icon.setText(first);
+                        name.setText(item.name);
+
+                        int d = item.days_until;
+                        subtitle.setText(d == 0 ? "Сегодня" : (d == 1 ? "Завтра" : ("Через " + d + " дн.")));
+
+                        amount.setText(item.amount + " " + (item.currency == null ? "RUB" : item.currency));
+                        date.setText(item.next_billing_date == null ? "—" : item.next_billing_date);
+
+                        container.addView(row);
+                    }
+                }
+
+                dialog.setContentView(view);
+                dialog.show();
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<UpcomingNotificationsResponse> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Ошибка сети", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

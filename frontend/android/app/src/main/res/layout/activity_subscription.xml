@@ -60,16 +60,6 @@
                             android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_bell" />
-
-                        <TextView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:layout_gravity="end|top"
-                            android:background="@drawable/bg_badge_red"
-                            android:gravity="center"
-                            android:text="3"
-                            android:textColor="@android:color/white"
-                            android:textSize="10sp" />
                     </FrameLayout>
                 </LinearLayout>
 
