@@ -22,6 +22,7 @@ import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.CheckBox;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -384,6 +385,7 @@ public class SubscriptionActivity extends AppCompatActivity {
         TextView amount = view.findViewById(R.id.dialog_sub_amount);
         TextView nextDate = view.findViewById(R.id.dialog_sub_next_date);
 
+        TextView actionEdit = view.findViewById(R.id.action_edit);
         TextView actionPause = view.findViewById(R.id.action_pause);
         TextView actionDelete = view.findViewById(R.id.action_delete);
 
@@ -410,6 +412,11 @@ public class SubscriptionActivity extends AppCompatActivity {
                 .setView(view)
                 .create();
 
+        actionEdit.setOnClickListener(v -> {
+            dialog.dismiss();
+            openEditSubscriptionSheet(s);
+        });
+
         actionPause.setOnClickListener(v -> {
             dialog.dismiss();
             if (paused) {
@@ -425,6 +432,158 @@ public class SubscriptionActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void openEditSubscriptionSheet(SubscriptionOut sub) {
+        String token = getTokenOrRedirect();
+        if (token == null) return;
+
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_add_subscription, null);
+
+        TextView title = view.findViewById(R.id.sub_title);
+        if (title != null) title.setText("Редактировать подписку");
+
+        EditText name = view.findViewById(R.id.sub_name);
+        EditText category = view.findViewById(R.id.sub_category);
+        EditText amount = view.findViewById(R.id.sub_amount);
+
+        TextView currencyView = view.findViewById(R.id.sub_currency);
+        TextView periodView = view.findViewById(R.id.sub_period);
+
+        TextView dateValue = view.findViewById(R.id.sub_date_value);
+        Switch dateSwitch = view.findViewById(R.id.sub_date_switch);
+
+        TextView btnCancel = view.findViewById(R.id.btn_cancel);
+        TextView btnSave = view.findViewById(R.id.btn_save);
+
+        String[] currency = new String[] {sub.currency == null ? "RUB" : sub.currency};
+        String[] period = new String[] {sub.billing_period == null ? "monthly" : sub.billing_period};
+
+        name.setText(sub.name == null ? "" : sub.name);
+        category.setText(sub.category == null ? "" : sub.category);
+        amount.setText(String.valueOf(sub.amount));
+
+        currencyView.setText(currency[0]);
+        periodView.setText(periodLabel(period[0]));
+
+        Calendar selectedDate = Calendar.getInstance();
+        Date next = parseDate(sub.next_billing_date);
+        if (next != null) {
+            selectedDate.setTime(next);
+            dateSwitch.setChecked(true);
+            dateValue.setEnabled(true);
+            dateValue.setAlpha(1f);
+            dateValue.setText(viewDate.format(selectedDate.getTime()));
+        } else {
+            dateSwitch.setChecked(false);
+            dateValue.setEnabled(false);
+            dateValue.setAlpha(0.6f);
+            dateValue.setText("Указать дату");
+        }
+
+        currencyView.setOnClickListener(v -> {
+            String[] options = {"RUB", "USD", "EUR"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Валюта")
+                    .setItems(options, (d, which) -> {
+                        currency[0] = options[which];
+                        currencyView.setText(options[which]);
+                    })
+                    .show();
+        });
+
+        periodView.setOnClickListener(v -> {
+            String[] labels = {"Ежемесячно", "Раз в 6 месяцев", "Ежегодно"};
+            String[] values = {"monthly", "half_year", "yearly"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Период")
+                    .setItems(labels, (d, which) -> {
+                        period[0] = values[which];
+                        periodView.setText(labels[which]);
+                    })
+                    .show();
+        });
+
+        dateSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            dateValue.setEnabled(isChecked);
+            dateValue.setAlpha(isChecked ? 1f : 0.6f);
+            if (!isChecked) {
+                dateValue.setText("Указать дату");
+            } else {
+                dateValue.setText(viewDate.format(selectedDate.getTime()));
+            }
+        });
+
+        dateValue.setOnClickListener(v -> {
+            if (!dateSwitch.isChecked()) return;
+            DatePickerDialog picker = new DatePickerDialog(
+                    this,
+                    (dp, y, m, d) -> {
+                        selectedDate.set(Calendar.YEAR, y);
+                        selectedDate.set(Calendar.MONTH, m);
+                        selectedDate.set(Calendar.DAY_OF_MONTH, d);
+                        dateValue.setText(viewDate.format(selectedDate.getTime()));
+                    },
+                    selectedDate.get(Calendar.YEAR),
+                    selectedDate.get(Calendar.MONTH),
+                    selectedDate.get(Calendar.DAY_OF_MONTH)
+            );
+            picker.show();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSave.setOnClickListener(v -> {
+            String n = name.getText().toString().trim();
+            String c = category.getText().toString().trim();
+            String aStr = amount.getText().toString().trim();
+
+            if (n.isEmpty() || aStr.isEmpty()) {
+                Toast.makeText(this, "Заполните название и сумму", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double a = Double.parseDouble(aStr);
+            String nextDate = dateSwitch.isChecked() ? dateFormat.format(selectedDate.getTime()) : null;
+
+            SubscriptionUpdateRequest req = new SubscriptionUpdateRequest(
+                    n,
+                    a,
+                    currency[0],
+                    period[0],
+                    c.isEmpty() ? null : c,
+                    nextDate,
+                    null
+            );
+
+            subscriptionsApi.update("Bearer " + token, sub.id, req)
+                    .enqueue(new Callback<SubscriptionOut>() {
+                        @Override
+                        public void onResponse(Call<SubscriptionOut> call, Response<SubscriptionOut> response) {
+                            if (response.isSuccessful()) {
+                                dialog.dismiss();
+                                loadSubscriptions();
+                            } else {
+                                Toast.makeText(SubscriptionActivity.this, "Ошибка сохранения", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<SubscriptionOut> call, Throwable t) {
+                            Toast.makeText(SubscriptionActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
+        dialog.setContentView(view);
+        dialog.show();
+    }
+
+    private String periodLabel(String value) {
+        if ("half_year".equalsIgnoreCase(value)) return "Раз в 6 месяцев";
+        if ("yearly".equalsIgnoreCase(value)) return "Ежегодно";
+        return "Ежемесячно";
     }
 
     private boolean isPaused(SubscriptionOut s) {
