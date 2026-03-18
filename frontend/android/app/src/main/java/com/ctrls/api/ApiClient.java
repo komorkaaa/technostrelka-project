@@ -1,5 +1,8 @@
 package com.ctrls.api;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -19,9 +22,13 @@ public class ApiClient {
                     .addInterceptor(logging)
                     .build();
 
+            Gson gson = new GsonBuilder()
+                    .serializeNulls()
+                    .create();
+
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .client(client)
                     .build();
         }
