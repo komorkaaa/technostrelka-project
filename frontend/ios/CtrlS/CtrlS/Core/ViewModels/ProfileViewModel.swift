@@ -32,8 +32,11 @@ final class ProfileViewModel: ObservableObject {
 
             let monthlyText = formatAmount(totals.month)
             let avgHalfYear = totals.halfYear / 6.0
-            let savingsValue = avgHalfYear - totals.month
-            let savingsText = savingsValue > 0 ? formatAmount(savingsValue) : "—"
+            let savingsText: String = {
+                guard avgHalfYear > 0 else { return "—" }
+                let ratio = max(0, ((avgHalfYear - totals.month) / avgHalfYear) * 100.0)
+                return "\(Int(ratio.rounded()))%"
+            }()
 
             self.profile = profile
             self.stats = Stats(

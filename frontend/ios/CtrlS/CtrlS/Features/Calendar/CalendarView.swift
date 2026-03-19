@@ -3,43 +3,47 @@ import SwiftUI
 struct CalendarView: View {
     @EnvironmentObject private var session: SessionManager
     @State private var isNotificationsPresented = false
-    @State private var activeSheet: SheetDestination?
+    @State private var selectedDayTitle = ""
+    @State private var selectedDayPayments: [Subscription] = []
+    @State private var isDayPaymentsPresented = false
     @StateObject private var viewModel = CalendarViewModel(service: RealAPIService.shared)
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Spacing.lg) {
-                    monthCard
+                    AndroidPageHeader(title: "Календарь", onNotifications: { isNotificationsPresented = true })
+                    summaryCard
                     calendarCard
+
                     if let error = viewModel.errorMessage {
                         Text(error)
                             .font(DS.Typography.caption)
                             .foregroundStyle(.red)
                     }
-                    dayPaymentsSection
+
+                    upcomingWeekSection
                 }
                 .padding(.horizontal, DS.Spacing.md)
                 .padding(.top, DS.Spacing.lg)
-                .padding(.bottom, DS.Spacing.xl)
+                .padding(.bottom, 96)
             }
             .background(DS.ColorToken.screenBackground)
-            .navigationTitle("Календарь")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isNotificationsPresented = true }) {
-                        Image(systemName: "bell")
-                            .foregroundStyle(DS.ColorToken.textSecondary)
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $isNotificationsPresented) {
                 NotificationsView()
+                    .presentationDetents([.medium, .large])
             }
-            .sheet(item: $activeSheet) { sheet in
-                PlaceholderView(title: sheet.title)
+            .sheet(isPresented: $isDayPaymentsPresented) {
+                DayPaymentsSheet(title: selectedDayTitle, payments: selectedDayPayments)
+                    .presentationDetents([.medium, .large])
             }
-            .task(id: session.accessToken) { await viewModel.load() }
+            .task(id: session.accessToken) {
+                await viewModel.load()
+            }
+            .refreshable {
+                await viewModel.load()
+            }
         }
     }
 }
@@ -50,238 +54,265 @@ struct CalendarView: View {
 }
 
 private extension CalendarView {
-    var monthCard: some View {
+    var summaryCard: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(red: 0.1, green: 0.45, blue: 0.96),
-                         Color(red: 0.03, green: 0.65, blue: 0.78)],
+                colors: [
+                    Color(red: 0.16, green: 0.47, blue: 0.96),
+                    Color(red: 0.02, green: 0.66, blue: 0.82)
+                ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
 
-            VStack(alignment: .leading, spacing: DS.Spacing.md) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Всего в этом месяце")
-                    .font(DS.Typography.body)
+                    .font(DS.Typography.caption)
                     .foregroundStyle(.white.opacity(0.9))
-                Text(formatAmount(viewModel.totalAmount(in: viewModel.currentMonthDate())))
-                    .font(.system(size: 28, weight: .bold))
+                Text(AppDisplay.formatAmount(viewModel.totalAmount(in: viewModel.currentMonthDate()), currency: "RUB"))
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
                 Text("\(viewModel.count(in: viewModel.currentMonthDate())) платежей")
                     .font(DS.Typography.caption)
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(.white.opacity(0.85))
             }
-            .padding(DS.Spacing.lg)
+            .padding(DS.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, minHeight: 160)
+        .frame(minHeight: 160)
     }
 
     var calendarCard: some View {
-        VStack(alignment: .leading, spacing: DS.Spacing.md) {
-            HStack {
-                Text(monthTitle(for: viewModel.currentMonthDate()))
-                    .font(DS.Typography.headline)
-                Spacer()
-                Button("Сегодня") {
-                    viewModel.setMonthOffset(0)
-                    viewModel.selectedDate = Date()
+        AndroidCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(monthTitle(for: viewModel.currentMonthDate()))
+                        .font(DS.Typography.subheadline)
+                        .foregroundStyle(DS.ColorToken.textPrimary)
+
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        monthNavButton(systemName: "chevron.left") {
+                            viewModel.setMonthOffset(viewModel.monthOffset - 1)
+                        }
+                        monthNavButton(systemName: "chevron.right") {
+                            viewModel.setMonthOffset(viewModel.monthOffset + 1)
+                        }
+                    }
                 }
-                .font(DS.Typography.caption)
-                .foregroundStyle(DS.ColorToken.accent)
-                HStack(spacing: 8) {
-                    navButton(system: "chevron.left", title: "Предыдущий месяц", action: {
-                        viewModel.setMonthOffset(viewModel.monthOffset - 1)
-                    })
-                    navButton(system: "chevron.right", title: "Следующий месяц", action: {
-                        viewModel.setMonthOffset(viewModel.monthOffset + 1)
-                    })
+
+                HStack {
+                    ForEach(["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], id: \.self) { title in
+                        Text(title)
+                            .font(DS.Typography.caption)
+                            .foregroundStyle(DS.ColorToken.textSecondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+                    ForEach(viewModel.daysForMonth()) { day in
+                        CalendarDayTile(day: day) {
+                            let payments = viewModel.payments(on: day.date)
+                            guard !payments.isEmpty else { return }
+                            selectedDayPayments = payments
+                            selectedDayTitle = AppDisplay.formatDayTitle(day.date)
+                            isDayPaymentsPresented = true
+                        }
+                    }
                 }
             }
-            CalendarGrid(
-                days: viewModel.daysForMonth(),
-                selectedDate: viewModel.selectedDate,
-                onSelect: { date in viewModel.selectedDate = date }
-            )
         }
-        .padding(DS.Spacing.md)
-        .background(DS.ColorToken.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
-        )
     }
 
-    var dayPaymentsSection: some View {
-        VStack(alignment: .leading, spacing: DS.Spacing.md) {
-            Text("Платежи на \(dayTitle(for: viewModel.selectedDate))")
+    var upcomingWeekSection: some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            Text("Ближайшие 7 дней")
                 .font(DS.Typography.headline)
-            VStack(spacing: DS.Spacing.sm) {
-                let payments = viewModel.payments(on: viewModel.selectedDate)
-                if payments.isEmpty {
-                    Text("Нет списаний на выбранную дату")
+                .foregroundStyle(DS.ColorToken.textPrimary)
+
+            if upcomingWeekSubscriptions.isEmpty {
+                AndroidCard {
+                    Text("Нет платежей в ближайшие 7 дней")
                         .font(DS.Typography.caption)
                         .foregroundStyle(DS.ColorToken.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                ForEach(payments) { payment in
-                    PaymentRow(
-                        title: payment.title,
-                        subtitle: payment.subtitle,
-                        amount: payment.price,
-                        color: color(from: payment.status == .paused ? "orange" : "purple")
-                    )
-                    .onTapGesture { activeSheet = SheetDestination(title: payment.title) }
+            } else {
+                VStack(spacing: DS.Spacing.sm) {
+                    ForEach(upcomingWeekSubscriptions) { payment in
+                        AndroidCard {
+                            HStack(spacing: DS.Spacing.md) {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.black.opacity(0.9))
+                                    .frame(width: 44, height: 44)
+                                    .overlay(
+                                        Text(AppDisplay.firstLetter(from: payment.title))
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    )
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(payment.title)
+                                        .font(DS.Typography.body)
+                                        .foregroundStyle(DS.ColorToken.textPrimary)
+                                    Text(AppDisplay.daysUntilText(from: payment.nextBillingDate))
+                                        .font(DS.Typography.caption)
+                                        .foregroundStyle(DS.ColorToken.textSecondary)
+                                }
+
+                                Spacer()
+
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(AppDisplay.formatAmount(payment.amount, currency: payment.currency))
+                                        .font(DS.Typography.headline)
+                                        .foregroundStyle(DS.ColorToken.textPrimary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.72)
+                                    Text(formattedDate(for: payment))
+                                        .font(DS.Typography.caption)
+                                        .foregroundStyle(DS.ColorToken.textSecondary)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    func navButton(system: String, title: String, action: @escaping () -> Void) -> some View {
+    var upcomingWeekSubscriptions: [Subscription] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let end = calendar.date(byAdding: .day, value: 6, to: today) else { return [] }
+
+        return viewModel.subscriptions
+            .compactMap { subscription -> (Subscription, Date)? in
+                guard let date = AppDisplay.parseAPIDate(subscription.nextBillingDate) else { return nil }
+                return (subscription, date)
+            }
+            .filter { $0.1 >= today && $0.1 <= end }
+            .sorted { $0.1 < $1.1 }
+            .map { $0.0 }
+    }
+
+    func monthNavButton(systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: system)
-                .font(.system(size: 12, weight: .bold))
-                .frame(width: 28, height: 28)
-                .background(DS.ColorToken.chipBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            Image(systemName: systemName)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(DS.ColorToken.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(DS.ColorToken.cardBackground)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(DS.ColorToken.border, lineWidth: 1))
         }
+        .buttonStyle(.plain)
     }
 
     func monthTitle(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: date).capitalized
-    }
-
-    func dayTitle(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.dateFormat = "d MMMM"
+        formatter.dateFormat = "LLLL yyyy 'г.'"
         return formatter.string(from: date)
     }
 
-    func color(from name: String) -> Color {
-        switch name {
-        case "black": return .black
-        case "green": return .green
-        case "orange": return .orange
-        case "red": return .red
-        case "blue": return .blue
-        case "purple": return .purple
-        default: return .gray
+    func formattedDate(for subscription: Subscription) -> String {
+        guard let date = AppDisplay.parseAPIDate(subscription.nextBillingDate) else {
+            return "—"
         }
-    }
-
-    func formatAmount(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 2
-        formatter.locale = Locale(identifier: "ru_RU")
-        let base = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-        return "\(base) ₽"
+        return AppDisplay.formatShortDate(date)
     }
 }
 
-private struct SheetDestination: Identifiable {
-    let id = UUID()
-    let title: String
-}
-
-private struct CalendarGrid: View {
-    private let weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-    let days: [CalendarDay]
-    let selectedDate: Date
-    let onSelect: (Date) -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                ForEach(weekDays, id: \.self) { day in
-                    Text(day)
-                        .font(DS.Typography.caption)
-                        .foregroundStyle(DS.ColorToken.textSecondary)
-                        .frame(maxWidth: .infinity)
-                }
-            }
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
-                ForEach(days) { day in
-                    CalendarDayCell(
-                        day: day,
-                        isSelected: Calendar.current.isDate(day.date, inSameDayAs: selectedDate),
-                        onSelect: onSelect
-                    )
-                }
-            }
-        }
-    }
-}
-
-private struct CalendarDayCell: View {
+private struct CalendarDayTile: View {
     let day: CalendarDay
-    let isSelected: Bool
-    let onSelect: (Date) -> Void
+    let onTap: () -> Void
 
     var body: some View {
-        Button(action: { onSelect(day.date) }) {
-            VStack(spacing: 4) {
-                Text("\(Calendar.current.component(.day, from: day.date))")
-                    .font(DS.Typography.caption)
+        let calendar = Calendar.current
+        let isToday = calendar.isDate(day.date, inSameDayAs: Date())
+        let hasPayments = day.paymentsCount > 0
+
+        Button(action: onTap) {
+            ZStack(alignment: .bottomTrailing) {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(day.isInMonth ? (isToday ? DS.ColorToken.softPurple : DS.ColorToken.cardBackground) : DS.ColorToken.screenBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(isToday ? DS.ColorToken.accent.opacity(0.5) : DS.ColorToken.border, lineWidth: 1)
+                    )
+
+                Text("\(calendar.component(.day, from: day.date))")
+                    .font(DS.Typography.captionBold)
                     .foregroundStyle(day.isInMonth ? DS.ColorToken.textPrimary : DS.ColorToken.textSecondary)
-                if day.paymentsCount > 0 {
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(8)
+
+                if hasPayments {
                     Circle()
                         .fill(DS.ColorToken.accent)
-                        .frame(width: 6, height: 6)
-                } else {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 6, height: 6)
+                        .frame(width: 8, height: 8)
+                        .padding(8)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 32)
-            .background(isSelected ? DS.ColorToken.accent.opacity(0.2) : DS.ColorToken.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .frame(height: 54)
         }
         .buttonStyle(.plain)
+        .disabled(!hasPayments)
     }
 }
 
-private struct PaymentRow: View {
+private struct DayPaymentsSheet: View {
     let title: String
-    let subtitle: String
-    let amount: String
-    let color: Color
+    let payments: [Subscription]
 
     var body: some View {
-        HStack(spacing: DS.Spacing.md) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(color)
-                .frame(width: 44, height: 44)
-                .overlay(
-                    Text(String(title.prefix(1)))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
-                )
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(DS.Typography.body)
-                    .foregroundStyle(DS.ColorToken.textPrimary)
-                Text(subtitle)
-                    .font(DS.Typography.caption)
-                    .foregroundStyle(DS.ColorToken.textSecondary)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Spacing.md) {
+                    Text(title)
+                        .font(DS.Typography.headline)
+                        .foregroundStyle(DS.ColorToken.textPrimary)
+
+                    ForEach(payments) { payment in
+                        AndroidCard {
+                            HStack(spacing: DS.Spacing.md) {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.black.opacity(0.9))
+                                    .frame(width: 44, height: 44)
+                                    .overlay(
+                                        Text(AppDisplay.firstLetter(from: payment.title))
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    )
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(payment.title)
+                                        .font(DS.Typography.body)
+                                        .foregroundStyle(DS.ColorToken.textPrimary)
+                                    Text("Списание в этот день")
+                                        .font(DS.Typography.caption)
+                                        .foregroundStyle(DS.ColorToken.textSecondary)
+                                }
+
+                                Spacer()
+
+                                Text(AppDisplay.formatAmount(payment.amount, currency: payment.currency))
+                                    .font(DS.Typography.headline)
+                                    .foregroundStyle(DS.ColorToken.textPrimary)
+                            }
+                        }
+                    }
+                }
+                .padding(DS.Spacing.md)
             }
-            Spacer()
-            Text(amount)
-                .font(DS.Typography.body)
-                .foregroundStyle(DS.ColorToken.textPrimary)
+            .background(DS.ColorToken.screenBackground)
+            .navigationTitle("Платежи")
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .padding(DS.Spacing.md)
-        .background(DS.ColorToken.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                .stroke(DS.ColorToken.chipBackground, lineWidth: 1)
-        )
     }
 }
