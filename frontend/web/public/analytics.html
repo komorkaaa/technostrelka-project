@@ -43,39 +43,72 @@
       <div class="content">
         <div class="page-title">
           <h2>Аналитика</h2>
-          <p>Графики и распределения</p>
+          <p>Сводка расходов и рекомендации</p>
         </div>
 
-        <div class="cards">
-          <div class="card"><h3>Месяц</h3><div class="value" id="anMonthly">—</div></div>
-          <div class="card"><h3>Полгода</h3><div class="value" id="anHalfYear">—</div></div>
-          <div class="card"><h3>Год</h3><div class="value" id="anYear">—</div></div>
-          <div class="card"><h3>Эффективность</h3><div class="value">87%</div></div>
-        </div>
-
-        <div class="card-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <h4>Категории</h4>
-            </div>
-            <div class="chart-card" id="categoryChart"></div>
-            <div class="chart-legend" id="categoryLegend"></div>
+        <div class="analytics-controls">
+          <div class="period-tabs">
+            <button class="tab active" data-period="month">Месяц</button>
+            <button class="tab" data-period="half_year">Полгода</button>
+            <button class="tab" data-period="year">Год</button>
           </div>
+          <label class="analytics-select">
+            <span>Категория</span>
+            <select id="analyticsCategorySelect">
+              <option value="">Все категории</option>
+            </select>
+          </label>
+        </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <h4>Сервисы</h4>
-            </div>
-            <div class="chart-card" id="serviceChart"></div>
-            <div class="chart-legend" id="serviceLegend"></div>
+        <div class="analytics-stats-grid">
+          <div class="card compact-metric">
+            <h3>Средний расход</h3>
+            <div class="value" id="analyticsAvgSpend">—</div>
+          </div>
+          <div class="card compact-metric">
+            <h3>Тренд</h3>
+            <div class="value" id="analyticsTrend">—</div>
+          </div>
+          <div class="card compact-metric">
+            <h3>Экономия</h3>
+            <div class="value" id="analyticsSavings">—</div>
+          </div>
+          <div class="card compact-metric">
+            <h3>Эффективность</h3>
+            <div class="value" id="analyticsEfficiency">—</div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
-            <h4>Тренд расходов</h4>
+            <h4>Динамика расходов</h4>
           </div>
           <div class="chart" id="trendChart"></div>
+          <div class="analytics-minmax">
+            <div class="analytics-minmax-card">
+              <span>Минимум</span>
+              <strong id="analyticsMinValue">—</strong>
+            </div>
+            <div class="analytics-minmax-card">
+              <span>Максимум</span>
+              <strong id="analyticsMaxValue">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel analytics-categories-panel">
+          <div class="panel-header">
+            <h4>По категориям</h4>
+          </div>
+          <div class="chart-card compact-chart-card" id="categoryChart"></div>
+          <div class="chart-legend" id="categoryLegend"></div>
+        </div>
+
+        <div class="panel recommendation-panel">
+          <div class="panel-header">
+            <h4>Рекомендации по экономии</h4>
+          </div>
+          <div class="recommendation-list" id="analyticsRecommendations"></div>
         </div>
       </div>
     </div>
