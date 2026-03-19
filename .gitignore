@@ -35,3 +35,7 @@ __pycache__/
 **/xcuserdata/
 
 frontend/ios/CtrlS/CtrlS.xcodeproj/project.xcworkspace/xcuserdata/makbuk.xcuserdatad/UserInterfaceState.xcuserstate
+
+.DS_Store
+**/.DS_Store
+xcuserdata/
