@@ -62,61 +62,162 @@
       </div>
 
       <div class="content">
-        <div class="page-title">
-          <h2>Настройки</h2>
-          <p>Профиль и безопасность</p>
-        </div>
-
-        <div class="tabs">
-          <button class="tab active" data-target="tabProfile">Профиль</button>
-          <button class="tab" data-target="tabNotifications">Уведомления</button>
-          <button class="tab" data-target="tabPayment">Оплата</button>
-          <button class="tab" data-target="tabSecurity">Безопасность</button>
-        </div>
-
-
-        <div class="panel tab-panel active" id="tabProfile">
-          <div class="panel-header">
-            <h4>Профиль</h4>
+        <section class="mobile-screen">
+          <div class="page-title">
+            <h2>Профиль</h2>
+            <p>Структура и блоки как в Android-приложении</p>
           </div>
-          <div class="settings-form">
-            <div><label>Email</label><input id="setEmail" type="email" /></div>
-            <div><label>Телефон</label><input id="setPhone" type="tel" /></div>
-            <button class="button-primary" id="saveProfile">Сохранить</button>
-          </div>
-        </div>
 
-        <div class="panel tab-panel" id="tabNotifications">
-          <div class="panel-header">
-            <h4>Уведомления</h4>
-          </div>
-          <div class="settings-form">
-            <div><label>Показывать списания за (дней)</label><input id="notifDays" type="number" min="1" max="30" />
+          <div class="profile-hero-card">
+            <div class="profile-avatar-large">П</div>
+            <div class="profile-hero-text">
+              <div class="profile-name" id="profileName">Пользователь</div>
+              <div class="profile-email-preview" id="profileEmailPreview">—</div>
             </div>
-            <button class="button-primary" id="saveNotifications">Сохранить</button>
           </div>
-          <div class="list" id="notifList"></div>
-        </div>
 
-        <div class="panel tab-panel" id="tabPayment">
-          <div class="panel-header">
-            <h4>Оплата</h4>
+          <div class="profile-stat-grid">
+            <div class="profile-stat-card">
+              <div class="profile-stat-value" id="profileSubsCount">0</div>
+              <div class="profile-stat-label">Подписок</div>
+            </div>
+            <div class="profile-stat-card">
+              <div class="profile-stat-value" id="profileMonthSpend">0 ₽</div>
+              <div class="profile-stat-label">В месяц</div>
+            </div>
+            <div class="profile-stat-card">
+              <div class="profile-stat-value is-green" id="profileSavings">0 ₽</div>
+              <div class="profile-stat-label">Экономия</div>
+            </div>
           </div>
-          <p>Добавь здесь платёжный метод (заглушка).</p>
-        </div>
 
-        <div class="panel tab-panel" id="tabSecurity">
-          <div class="panel-header">
-            <h4>Безопасность</h4>
+          <div class="profile-section-title">НАСТРОЙКИ</div>
+          <div class="profile-row-group">
+            <button class="profile-row-button" type="button" data-target="tabProfile">
+              <div class="profile-row-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke-width="2"></path>
+                  <path d="M5 20a7 7 0 0 1 14 0" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Личная информация</div>
+                <div class="profile-row-subtitle">Имя, email, телефон</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+            <button class="profile-row-button" type="button" data-target="tabNotifications">
+              <div class="profile-row-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" stroke-width="2" stroke-linejoin="round"></path>
+                  <path d="M10 20a2 2 0 0 0 4 0" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Уведомления</div>
+                <div class="profile-row-subtitle">Настройка оповещений</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+            <button class="profile-row-button" type="button" data-target="tabPayment">
+              <div class="profile-row-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2"></rect>
+                  <path d="M3 10h18" stroke-width="2"></path>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Способы оплаты</div>
+                <div class="profile-row-subtitle">Карты и интеграции</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
           </div>
-          <div class="settings-form">
-            <div><label>Текущий пароль</label><input id="currentPassword" type="password" /></div>
-            <div><label>Новый пароль</label><input id="newPassword" type="password" /></div>
-            <button class="button-primary" id="changePassword">Сменить пароль</button>
-          </div>
-        </div>
 
-        <button class="pill danger" id="logoutBtn">Выйти</button>
+          <div class="profile-section-title">ПРЕДПОЧТЕНИЯ</div>
+          <div class="profile-row-group">
+            <button class="profile-row-button" type="button" data-target="tabNotifications">
+              <div class="profile-row-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M12 4v9" stroke-width="2" stroke-linecap="round"></path>
+                  <circle cx="12" cy="17" r="1.25" fill="currentColor" stroke="none"></circle>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Push-уведомления</div>
+                <div class="profile-row-subtitle">О платежах и событиях</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+            <button class="profile-row-button" type="button">
+              <div class="profile-row-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8" stroke-width="2"></circle>
+                  <path d="M4 12h16" stroke-width="2"></path>
+                  <path d="M12 4a12 12 0 0 1 0 16" stroke-width="2"></path>
+                  <path d="M12 4a12 12 0 0 0 0 16" stroke-width="2"></path>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Язык и регион</div>
+                <div class="profile-row-subtitle">Русский, Киров (GMT+3)</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+          </div>
+
+          <div class="profile-section-title">БЕЗОПАСНОСТЬ</div>
+          <div class="profile-row-group">
+            <button class="profile-row-button" type="button" data-target="tabSecurity">
+              <div class="profile-row-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M12 3 6 5v5c0 4.5 2.9 8.3 6 9.8 3.1-1.5 6-5.3 6-9.8V5l-6-2Z" stroke-width="2" stroke-linejoin="round"></path>
+                  <path d="M12 9v4" stroke-width="2" stroke-linecap="round"></path>
+                  <circle cx="12" cy="15.5" r="1" fill="currentColor" stroke="none"></circle>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Пароль и безопасность</div>
+                <div class="profile-row-subtitle">Смена пароля, защита аккаунта</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+          </div>
+
+          <div class="profile-section-title">ПРОЧЕЕ</div>
+          <div class="profile-row-group">
+            <button class="profile-row-button" type="button">
+              <div class="profile-row-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M9.1 9a3 3 0 1 1 5.8 1c0 2-2.9 2.4-2.9 4" stroke-width="2" stroke-linecap="round"></path>
+                  <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"></circle>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Помощь и поддержка</div>
+                <div class="profile-row-subtitle">FAQ и контакты</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+            <button class="profile-row-button" type="button">
+              <div class="profile-row-icon gray">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M12 5v10" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="m8 12 4 4 4-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </div>
+              <div class="profile-row-copy">
+                <div class="profile-row-title">Экспорт данных</div>
+                <div class="profile-row-subtitle">Скачать все данные</div>
+              </div>
+              <div class="profile-row-arrow">›</div>
+            </button>
+          </div>
+
+          <button class="logout-card-button" id="logoutBtn" type="button">Выйти из аккаунта</button>
+          <div class="profile-version">SubMonitor v1.0.0</div>
+
+        </section>
       </div>
     </div>
   </div>
@@ -147,6 +248,44 @@
         </div>
         <div><label>Следующая дата списания</label><input id="subNextDate" type="date" /></div>
         <button class="button-primary" id="saveSubscription">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModalBackdrop" class="modal-backdrop"></div>
+  <div id="settingsModal" class="modal">
+    <div class="modal-card settings-modal-card">
+      <div class="panel-header">
+        <h4 id="settingsModalTitle">Настройки</h4>
+        <button class="pill" id="closeSettingsModal">Закрыть</button>
+      </div>
+
+      <div class="settings-modal-panel active" id="tabProfile">
+        <div class="settings-form">
+          <div><label>Email</label><input id="setEmail" type="email" /></div>
+          <div><label>Телефон</label><input id="setPhone" type="tel" /></div>
+          <button class="button-primary" id="saveProfile">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="settings-modal-panel" id="tabNotifications">
+        <div class="settings-form">
+          <div><label>Показывать списания за (дней)</label><input id="notifDays" type="number" min="1" max="30" /></div>
+          <button class="button-primary" id="saveNotifications">Сохранить</button>
+        </div>
+        <div class="list" id="notifList"></div>
+      </div>
+
+      <div class="settings-modal-panel" id="tabPayment">
+        <p>Этот экран пока как в приложении остаётся заглушкой для будущих интеграций.</p>
+      </div>
+
+      <div class="settings-modal-panel" id="tabSecurity">
+        <div class="settings-form">
+          <div><label>Текущий пароль</label><input id="currentPassword" type="password" /></div>
+          <div><label>Новый пароль</label><input id="newPassword" type="password" /></div>
+          <button class="button-primary" id="changePassword">Сменить пароль</button>
+        </div>
       </div>
     </div>
   </div>

@@ -41,49 +41,65 @@
       </div>
 
       <div class="content">
-        <div class="page-title">
-          <h2>Главная</h2>
-          <p>Обзор подписок и динамика расходов</p>
-        </div>
-
-        <div class="cards">
-          <div class="card emphasis">
-            <h3>Всего в месяц</h3>
-            <div class="value" id="kpiMonthly">—</div>
-            <div class="hint">По данным API</div>
-          </div>
-          <div class="card">
-            <h3>Активных подписок</h3>
-            <div class="value" id="kpiActive">—</div>
-          </div>
-          <div class="card">
-            <h3>Следующий платёж</h3>
-            <div class="value" id="kpiNext">—</div>
-          </div>
-          <div class="card">
-            <h3>Экономия</h3>
-            <div class="value" id="kpiSavings" style="color: var(--green);">—</div>
-          </div>
-        </div>
-
-        <div class="card-grid">
-          <div class="panel">
-            <div class="panel-header">
+        <section class="mobile-screen">
+          <div class="mobile-hero">
+            <div class="mobile-hero-head">
+              <div class="mobile-hero-label">Прогноз за месяц</div>
+              <button class="hero-plus-button" id="heroAddSubscription" type="button">+</button>
+            </div>
+            <div class="mobile-hero-value" id="kpiMonthly">—</div>
+            <div class="mobile-hero-divider"></div>
+            <div class="mobile-hero-foot">
               <div>
-                <h4>Динамика расходов</h4>
-                <small>Последние месяцы</small>
+                <div class="mobile-hero-caption">Активных</div>
+                <div class="mobile-hero-foot-value" id="kpiActive">—</div>
               </div>
             </div>
-            <div class="chart" id="homeChart"></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <h4>Ближайшие платежи</h4>
-            </div>
-            <div class="list" id="upcomingList"></div>
+          <div class="period-tabs home-period-tabs">
+            <button class="tab active" type="button" data-home-period="month">Месяц</button>
+            <button class="tab" type="button" data-home-period="half_year">Полгода</button>
+            <button class="tab" type="button" data-home-period="year">Год</button>
           </div>
+
+          <div class="warning-banner" id="homeWarningBanner">
+            <div class="warning-icon">!</div>
+            <div class="warning-text">
+              <div class="warning-title" id="homeWarningTitle">Скоро списание</div>
+              <div class="warning-subtitle" id="homeWarningText">Нет ближайших списаний</div>
+            </div>
+          </div>
+
+          <div class="home-mini-grid">
+            <div class="mini-stat-card">
+              <div class="mini-stat-icon blue">К</div>
+              <div>
+                <div class="mini-stat-label">Подписок</div>
+                <div class="mini-stat-value" id="homeSubscriptionsCount">—</div>
+              </div>
+            </div>
+            <div class="mini-stat-card">
+              <div class="mini-stat-icon orange">Д</div>
+              <div>
+                <div class="mini-stat-label">Ближайший</div>
+                <div class="mini-stat-value" id="kpiNext">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h4>Ближайшие платежи</h4>
+            <a href="/subscriptions" class="section-link">Все</a>
+          </div>
+          <div class="payment-list-mobile" id="upcomingList"></div>
+
+          <div class="section-header">
+            <h4>Популярные категории</h4>
+          </div>
+          <div class="category-grid-mobile" id="homeCategories"></div>
         </div>
+        </section>
       </div>
     </div>
   </div>

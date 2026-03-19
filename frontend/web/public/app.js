@@ -15,6 +15,20 @@ const calendarState = {
   selectedDate: null
 };
 
+const analyticsState = {
+  period: "month",
+  category: ""
+};
+
+const subscriptionsState = {
+  filter: "all",
+  search: ""
+};
+
+const homeState = {
+  period: "month"
+};
+
 function requireAuth() {
   const page = document.body.dataset.page;
   const token = localStorage.getItem("token");
@@ -119,6 +133,16 @@ function daysUntil(dateStr) {
   return `Через ${diff} дн.`;
 }
 
+function formatRelativeDay(diff) {
+  if (diff <= 0) return "Сегодня";
+  if (diff === 1) return "Завтра";
+  return `Через ${diff} дн.`;
+}
+
+function pluralizeSubscriptions(count) {
+  return `${count} подпис${count % 10 === 1 && count % 100 !== 11 ? "ка" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "ки" : "ок"}`;
+}
+
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -154,8 +178,9 @@ function isPaused(nextDate) {
   return diff > 180;
 }
 
-function svgLineChart(points, width = 520, height = 220) {
+function svgLineChart(points, width = 520, height = 220, options = {}) {
   if (!points.length) return "";
+  const { showPointLabels = true, showBottomLabels = false } = options;
   const max = Math.max(...points.map(p => p.value)) || 1;
   const min = Math.min(...points.map(p => p.value)) || 0;
   const pad = 28;
@@ -173,11 +198,15 @@ function svgLineChart(points, width = 520, height = 220) {
     return `<line x1="${pad}" y1="${y}" x2="${pad + w}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 4"/>`;
   });
 
-  const pointLabels = coords.map(c => {
+  const pointLabels = showPointLabels ? coords.map(c => {
     const placeBelow = c.y < pad + 14;
     const y = placeBelow ? c.y + 14 : c.y - 8;
     return `<text x="${c.x}" y="${y}" text-anchor="middle" font-size="9" fill="#6b7280">${c.label}</text>`;
-  });
+  }) : [];
+
+  const bottomLabels = showBottomLabels ? coords.map(c => (
+    `<text x="${c.x}" y="${height - 10}" text-anchor="middle" font-size="9" fill="#6b7280">${String(c.label).slice(0, 10)}</text>`
+  )) : [];
 
   return `
     <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%">
@@ -185,6 +214,7 @@ function svgLineChart(points, width = 520, height = 220) {
       <polyline fill="none" stroke="#8b2cff" stroke-width="3" points="${coords.map(c => `${c.x},${c.y}`).join(" " )}" />
       ${coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#8b2cff"/>`).join("")}
       ${pointLabels.join("")}
+      ${bottomLabels.join("")}
       <text x="${width - pad}" y="${pad - 8}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
       <text x="${width - pad}" y="${height - 6}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(min)}</text>
     </svg>
@@ -222,7 +252,8 @@ function svgBars(data, width = 520, height = 220) {
   `;
 }
 
-function svgDonut(data, width = 240, height = 240) {
+function svgDonut(data, width = 240, height = 240, options = {}) {
+  const { showLabels = true } = options;
   const total = data.reduce((s, d) => s + d.value, 0) || 1;
   const cx = width / 2;
   const cy = height / 2;
@@ -230,7 +261,7 @@ function svgDonut(data, width = 240, height = 240) {
   let start = 0;
   const colors = ["#8b2cff", "#2563eb", "#16a34a", "#f97316", "#ef4444", "#0ea5e9"];
 
-  const showLabels = data.length > 1;
+  const shouldShowLabels = showLabels && data.length > 1;
   const arcs = data.map((d, i) => {
     const angle = (d.value / total) * Math.PI * 2;
     const end = start + angle;
@@ -247,7 +278,7 @@ function svgDonut(data, width = 240, height = 240) {
 
     return `
       <path d="${path}" fill="${colors[i % colors.length]}"></path>
-      ${showLabels ? `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>` : ""}
+      ${shouldShowLabels ? `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>` : ""}
     `;
   });
 
@@ -258,6 +289,25 @@ function svgDonut(data, width = 240, height = 240) {
       <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#6b7280">Категории</text>
     </svg>
   `;
+}
+
+function renderCalendarSummary(subs) {
+  const totalEl = document.getElementById("calendarSummaryTotal");
+  const countEl = document.getElementById("calendarSummaryCount");
+  if (!totalEl || !countEl) return;
+
+  const base = calendarState.date || new Date();
+  const month = base.getMonth();
+  const year = base.getFullYear();
+
+  const items = subs.filter(sub => {
+    const date = parseDate(sub.next_billing_date);
+    return date && date.getMonth() === month && date.getFullYear() === year;
+  });
+
+  const total = items.reduce((sum, sub) => sum + Number(sub.amount || 0), 0);
+  totalEl.textContent = formatMoney(total);
+  countEl.textContent = `${items.length} платеж${items.length === 1 ? "" : items.length < 5 ? "а" : "ей"}`;
 }
 
 async function updateBadge() {
@@ -272,68 +322,186 @@ async function updateBadge() {
   }
 }
 
+async function openNotificationsModal() {
+  const modal = document.getElementById("notificationsModal");
+  const backdrop = document.getElementById("notificationsModalBackdrop");
+  const list = document.getElementById("notificationsModalList");
+  if (!modal || !backdrop || !list) return;
+
+  list.innerHTML = '<div class="empty-inline">Загрузка...</div>';
+  modal.classList.add("open");
+  backdrop.classList.add("open");
+
+  try {
+    const data = await apiGet(`/api/notifications/upcoming?days=${notifDays}`);
+    if (!data.items.length) {
+      list.innerHTML = '<div class="empty-inline">Нет ближайших уведомлений</div>';
+      return;
+    }
+    list.innerHTML = data.items.map(item => `
+      <div class="list-item">
+        <div class="left">
+          <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
+          <div>
+            <div>${item.name}</div>
+            <small>${daysUntil(item.next_billing_date)}</small>
+          </div>
+        </div>
+        <div class="list-item-stack">
+          <strong>${formatMoney(item.amount, item.currency)}</strong>
+          <small>${formatDate(item.next_billing_date)}</small>
+        </div>
+      </div>
+    `).join("");
+  } catch (err) {
+    list.innerHTML = `<div class="empty-inline">${err.message}</div>`;
+  }
+}
+
+function closeNotificationsModal() {
+  const modal = document.getElementById("notificationsModal");
+  const backdrop = document.getElementById("notificationsModalBackdrop");
+  if (modal) modal.classList.remove("open");
+  if (backdrop) backdrop.classList.remove("open");
+}
+
+function ensureNotificationsModal() {
+  if (document.getElementById("notificationsModal")) return;
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="notificationsModalBackdrop" class="modal-backdrop"></div>
+    <div id="notificationsModal" class="modal">
+      <div class="modal-card notifications-modal-card">
+        <div class="panel-header">
+          <h4>Уведомления</h4>
+          <button class="pill" id="closeNotificationsModal">Закрыть</button>
+        </div>
+        <div class="list" id="notificationsModalList"></div>
+      </div>
+    </div>
+  `);
+  document.getElementById("closeNotificationsModal").addEventListener("click", closeNotificationsModal);
+  document.getElementById("notificationsModalBackdrop").addEventListener("click", closeNotificationsModal);
+}
+
 function initNotifBadge() {
   const badge = document.getElementById("notifBadge");
   if (!badge || badge.dataset.bound) return;
   badge.dataset.bound = "1";
-  badge.addEventListener("click", () => {
-    const page = document.body.dataset.page;
-    if (page === "settings") {
-      if (typeof openSettingsTab === "function") {
-        openSettingsTab("tabNotifications");
-        const panel = document.getElementById("tabNotifications");
-        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        window.location.hash = "#notifications";
-      }
-      return;
-    }
-    window.location.href = "/settings#notifications";
-  });
+  badge.addEventListener("click", openNotificationsModal);
 }
 
 async function loadHome() {
-  const [analytics, chart, upcoming] = await Promise.all([
+  const [analytics, chart, upcoming, subs] = await Promise.all([
     apiGet("/api/analytics"),
-    apiGet("/api/analytics/chart?period=month"),
-    apiGet(`/api/notifications/upcoming?days=${notifDays}`)
+    apiGet(`/api/analytics/chart?period=${homeState.period}`),
+    apiGet(`/api/notifications/upcoming?days=${notifDays}`),
+    apiGet("/api/subscriptions")
   ]);
 
-  document.getElementById("kpiMonthly").textContent = formatMoney(analytics.totals.month);
+  document.getElementById("kpiMonthly").textContent = formatMoney(getSelectedAnalyticsTotal(chart.totals || analytics.totals));
   document.getElementById("kpiActive").textContent = Object.values(analytics.by_service || {}).length;
   document.getElementById("kpiNext").textContent = upcoming.items[0] ? daysUntil(upcoming.items[0].next_billing_date) : "—";
-  document.getElementById("kpiSavings").textContent = formatMoney(0);
+  document.getElementById("homeSubscriptionsCount").textContent = String(subs.length);
+
+  const warningTitle = document.getElementById("homeWarningTitle");
+  const warningText = document.getElementById("homeWarningText");
+  if (upcoming.items[0]) {
+    warningTitle.textContent = "Скоро списание";
+    warningText.textContent = `${daysUntil(upcoming.items[0].next_billing_date)} будет списано ${formatMoney(upcoming.items[0].amount, upcoming.items[0].currency)} за ${upcoming.items[0].name}`;
+  } else {
+    warningTitle.textContent = "Пока спокойно";
+    warningText.textContent = "В ближайшие дни нет новых списаний";
+  }
 
   const list = document.getElementById("upcomingList");
   list.innerHTML = "";
-  upcoming.items.forEach(item => {
+  upcoming.items.slice(0, 4).forEach(item => {
     const row = document.createElement("div");
-    row.className = "list-item";
+    row.className = "payment-card-mobile";
     row.innerHTML = `
-      <div class="left">
-        <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
+      <div class="payment-card-mobile-left">
+        <div class="logo-pill" style="background:#1f2937;">${item.name[0] || "?"}</div>
         <div>
-          <div>${item.name}</div>
+          <div class="payment-card-mobile-title">${item.name}</div>
           <small>${daysUntil(item.next_billing_date)}</small>
         </div>
       </div>
-      <strong>${formatMoney(item.amount, item.currency)}</strong>
+      <div class="payment-card-mobile-right">
+        <strong>${formatMoney(item.amount, item.currency)}</strong>
+        <small>${formatDate(item.next_billing_date)}</small>
+      </div>
     `;
     list.appendChild(row);
   });
+  if (!upcoming.items.length) {
+    list.innerHTML = '<div class="empty-inline">Нет ближайших платежей</div>';
+  }
 
-  const chartContainer = document.getElementById("homeChart");
-  chartContainer.innerHTML = svgLineChart(chart.series.map(p => ({ label: p.label, value: Number(p.value) })));
+  const categories = Object.entries(analytics.by_category || {})
+    .map(([name, value]) => ({ name, value: Number(value) }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 4);
+  const categoriesEl = document.getElementById("homeCategories");
+  if (categoriesEl) {
+    categoriesEl.innerHTML = categories.map(category => `
+      <div class="category-card-mobile">
+        <div class="category-card-title">${category.name}</div>
+        <div class="category-card-value">${formatMoney(category.value)}</div>
+      </div>
+    `).join("");
+  }
+
+  const heroAdd = document.getElementById("heroAddSubscription");
+  if (heroAdd && !heroAdd.dataset.bound) {
+    heroAdd.dataset.bound = "1";
+    heroAdd.addEventListener("click", () => openModal("add"));
+  }
+
+  document.querySelectorAll("[data-home-period]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.homePeriod === homeState.period);
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", async () => {
+      homeState.period = btn.dataset.homePeriod;
+      document.querySelectorAll("[data-home-period]").forEach(item => {
+        item.classList.toggle("active", item.dataset.homePeriod === homeState.period);
+      });
+      await loadHome();
+    });
+  });
 }
 
 async function loadSubscriptions() {
   const data = await apiGet("/api/subscriptions");
   const container = document.getElementById("subscriptionsList");
+  const search = subscriptionsState.search.trim().toLowerCase();
+  const filtered = data.filter(sub => {
+    const paused = isPaused(sub.next_billing_date);
+    if (subscriptionsState.filter === "active" && paused) return false;
+    if (subscriptionsState.filter === "paused" && !paused) return false;
+    if (!search) return true;
+    return [sub.name, sub.category, sub.billing_period]
+      .filter(Boolean)
+      .some(value => String(value).toLowerCase().includes(search));
+  });
+
+  const activeCount = data.filter(sub => !isPaused(sub.next_billing_date)).length;
+  const pausedCount = data.length - activeCount;
+  const chipAll = document.getElementById("chipAll");
+  const chipActive = document.getElementById("chipActive");
+  const chipPaused = document.getElementById("chipPaused");
+  if (chipAll) chipAll.textContent = `Все (${data.length})`;
+  if (chipActive) chipActive.textContent = `Активные (${activeCount})`;
+  if (chipPaused) chipPaused.textContent = `На паузе (${pausedCount})`;
+  document.querySelectorAll(".chip[data-filter]").forEach(chip => {
+    chip.classList.toggle("active", chip.dataset.filter === subscriptionsState.filter);
+  });
+
   container.innerHTML = "";
-  data.forEach(sub => {
+  filtered.forEach(sub => {
     const paused = isPaused(sub.next_billing_date);
     const card = document.createElement("div");
-    card.className = "subscription-card";
+    card.className = "subscription-card subscription-card-android";
     card.innerHTML = `
       <div class="meta">
         <div class="logo-pill" style="background:#1f2937;">${sub.name[0] || "?"}</div>
@@ -357,6 +525,9 @@ async function loadSubscriptions() {
     `;
     container.appendChild(card);
   });
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-inline">Ничего не найдено</div>';
+  }
 
   container.onclick = async (e) => {
     const btn = e.target.closest("[data-action]");
@@ -384,6 +555,24 @@ async function loadSubscriptions() {
       await loadSubscriptions();
     }
   };
+
+  const searchInput = document.getElementById("subscriptionsSearch");
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = "1";
+    searchInput.addEventListener("input", async () => {
+      subscriptionsState.search = searchInput.value;
+      await loadSubscriptions();
+    });
+  }
+
+  document.querySelectorAll(".chip[data-filter]").forEach(chip => {
+    if (chip.dataset.bound) return;
+    chip.dataset.bound = "1";
+    chip.addEventListener("click", async () => {
+      subscriptionsState.filter = chip.dataset.filter;
+      await loadSubscriptions();
+    });
+  });
 }
 
 function renderCalendarList(events) {
@@ -412,7 +601,7 @@ function renderCalendarList(events) {
           <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
           <div>
             <div>${item.name}</div>
-            <small>${item.date.toLocaleDateString("ru-RU")}</small>
+            <small>Списание в этот день</small>
           </div>
         </div>
         <strong>${formatMoney(item.amount, item.currency)}</strong>
@@ -439,6 +628,7 @@ function renderCalendarList(events) {
   }
 
   upcoming.forEach(item => {
+    const diff = Math.ceil((item.date - start) / (1000 * 60 * 60 * 24));
     const row = document.createElement("div");
     row.className = "list-item";
     row.innerHTML = `
@@ -446,10 +636,13 @@ function renderCalendarList(events) {
         <div class="logo-pill" style="background:#111827;">${item.name[0] || "?"}</div>
         <div>
           <div>${item.name}</div>
-          <small>${item.date.toLocaleDateString("ru-RU")}</small>
+          <small>${formatRelativeDay(diff)}</small>
         </div>
       </div>
-      <strong>${formatMoney(item.amount, item.currency)}</strong>
+      <div class="list-item-stack">
+        <strong>${formatMoney(item.amount, item.currency)}</strong>
+        <small>${item.date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</small>
+      </div>
     `;
     list.appendChild(row);
   });
@@ -508,7 +701,11 @@ function renderCalendar() {
     cell.className = `calendar-day ${hasEvent ? "has-event" : ""} ${isSelected ? "selected" : ""}`.trim();
     cell.innerHTML = `<div class="num">${day}</div>${hasEvent ? '<div class="dot"></div>' : ""}`;
     cell.addEventListener("click", () => {
-      calendarState.selectedDate = cellDate;
+      if (calendarState.selectedDate && calendarState.selectedDate.toDateString() === cellDate.toDateString()) {
+        calendarState.selectedDate = null;
+      } else {
+        calendarState.selectedDate = cellDate;
+      }
       renderCalendar();
     });
     grid.appendChild(cell);
@@ -527,11 +724,11 @@ async function loadCalendar() {
 
   const prevBtn = document.getElementById("calendarPrev");
   const nextBtn = document.getElementById("calendarNext");
-  const clearBtn = document.getElementById("calendarClearDay");
   if (prevBtn && !prevBtn.dataset.bound) {
     prevBtn.dataset.bound = "1";
     prevBtn.addEventListener("click", () => {
       calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() - 1, 1);
+      renderCalendarSummary(calendarState.subs);
       renderCalendar();
     });
   }
@@ -539,53 +736,178 @@ async function loadCalendar() {
     nextBtn.dataset.bound = "1";
     nextBtn.addEventListener("click", () => {
       calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() + 1, 1);
-      renderCalendar();
-    });
-  }
-  if (clearBtn && !clearBtn.dataset.bound) {
-    clearBtn.dataset.bound = "1";
-    clearBtn.addEventListener("click", () => {
-      calendarState.selectedDate = null;
+      renderCalendarSummary(calendarState.subs);
       renderCalendar();
     });
   }
 
+  renderCalendarSummary(subs);
   renderCalendar();
+}
+
+function getSelectedAnalyticsTotal(totals) {
+  if (analyticsState.period === "half_year") return Number(totals.half_year || 0);
+  if (analyticsState.period === "year") return Number(totals.year || 0);
+  return Number(totals.month || 0);
+}
+
+function updateAnalyticsTabs() {
+  document.querySelectorAll("[data-period]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.period === analyticsState.period);
+  });
+}
+
+function fillAnalyticsCategorySelect(byCategory) {
+  const select = document.getElementById("analyticsCategorySelect");
+  if (!select) return;
+  const categories = Object.keys(byCategory || {}).sort((a, b) => a.localeCompare(b, "ru"));
+  const currentValue = analyticsState.category;
+  select.innerHTML = '<option value="">Все категории</option>' +
+    categories.map(category => `<option value="${category}">${category}</option>`).join("");
+  select.value = currentValue;
+}
+
+function updateAnalyticsCards(series) {
+  const values = (series || []).map(point => Number(point.value));
+  const avgEl = document.getElementById("analyticsAvgSpend");
+  const trendEl = document.getElementById("analyticsTrend");
+  const savingsEl = document.getElementById("analyticsSavings");
+  const efficiencyEl = document.getElementById("analyticsEfficiency");
+  const minEl = document.getElementById("analyticsMinValue");
+  const maxEl = document.getElementById("analyticsMaxValue");
+
+  if (!values.length) {
+    [avgEl, trendEl, savingsEl, efficiencyEl, minEl, maxEl].forEach(el => {
+      if (el) el.textContent = "—";
+    });
+    return;
+  }
+
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  const avg = sum / values.length;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const first = values[0];
+  const last = values[values.length - 1];
+  const trend = first > 0 ? ((last - first) / first) * 100 : 0;
+  const savings = max - min;
+  const efficiency = max > 0 ? (avg / max) * 100 : 0;
+
+  avgEl.textContent = formatMoney(avg);
+  trendEl.textContent = `${trend >= 0 ? "+" : ""}${trend.toFixed(1)}%`;
+  savingsEl.textContent = formatMoney(savings);
+  efficiencyEl.textContent = `${Math.round(efficiency)}%`;
+  minEl.textContent = formatMoney(min);
+  maxEl.textContent = formatMoney(max);
+}
+
+function renderAnalyticsRecommendations(byService) {
+  const container = document.getElementById("analyticsRecommendations");
+  if (!container) return;
+
+  const services = Object.entries(byService || {})
+    .map(([name, value]) => ({ name, value: Number(value) }))
+    .sort((a, b) => b.value - a.value);
+
+  const recommendations = [];
+
+  if (services[0]) {
+    recommendations.push(`Проверь годовой тариф для ${services[0].name}: это самый дорогой сервис в списке.`);
+  }
+  if (services[1]) {
+    recommendations.push(`Сравни семейный или пакетный тариф для ${services[1].name}, если подпиской пользуются несколько человек.`);
+  }
+  if (services.length > 2) {
+    recommendations.push(`Обрати внимание на небольшие подписки: вместе они уже дают ${formatMoney(services.slice(2).reduce((sum, item) => sum + item.value, 0))}.`);
+  }
+
+  if (!recommendations.length) {
+    recommendations.push("Добавь больше подписок, чтобы увидеть персональные рекомендации по экономии.");
+  }
+
+  container.innerHTML = recommendations
+    .slice(0, 3)
+    .map(text => `<div class="recommendation-item">${text}</div>`)
+    .join("");
 }
 
 async function loadAnalytics() {
   const [analytics, chart] = await Promise.all([
     apiGet("/api/analytics"),
-    apiGet("/api/analytics/chart?period=month")
+    apiGet(`/api/analytics/chart?period=${analyticsState.period}${analyticsState.category ? `&category=${encodeURIComponent(analyticsState.category)}` : ""}`)
   ]);
 
-  document.getElementById("anMonthly").textContent = formatMoney(analytics.totals.month);
-  document.getElementById("anHalfYear").textContent = formatMoney(analytics.totals.half_year);
-  document.getElementById("anYear").textContent = formatMoney(analytics.totals.year);
-
   const byCategory = Object.entries(analytics.by_category || {}).map(([k, v]) => ({ label: k, value: Number(v) }));
-  const byService = Object.entries(analytics.by_service || {}).map(([k, v]) => ({ label: k, value: Number(v) }));
+  const byService = Object.fromEntries(Object.entries(analytics.by_service || {}).map(([k, v]) => [k, Number(v)]));
+  const totalForSelectedPeriod = getSelectedAnalyticsTotal(chart.totals || analytics.totals);
 
-  document.getElementById("categoryChart").innerHTML = svgDonut(byCategory);
-  document.getElementById("serviceChart").innerHTML = svgBars(byService);
-  document.getElementById("trendChart").innerHTML = svgLineChart(chart.series.map(p => ({ label: p.label, value: Number(p.value) })));
+  fillAnalyticsCategorySelect(analytics.by_category);
+  updateAnalyticsTabs();
+  document.getElementById("categoryChart").innerHTML = svgDonut(byCategory, 220, 220, { showLabels: false });
+  document.getElementById("trendChart").innerHTML = svgLineChart(
+    chart.series.map(p => ({ label: p.label, value: Number(p.value) })),
+    520,
+    220,
+    { showPointLabels: false, showBottomLabels: true }
+  );
+  updateAnalyticsCards(chart.series || []);
+  renderAnalyticsRecommendations(byService);
 
   const catLegend = document.getElementById("categoryLegend");
-  catLegend.innerHTML = byCategory.map(c => `<div>${c.label}: ${formatMoney(c.value)}</div>`).join("");
+  catLegend.innerHTML = byCategory
+    .map(c => `<div>${c.label}: ${formatMoney(c.value)}</div>`)
+    .join("");
 
-  const servLegend = document.getElementById("serviceLegend");
-  servLegend.innerHTML = byService.map(c => `<div>${c.label}: ${formatMoney(c.value)}</div>`).join("");
+  const avgEl = document.getElementById("analyticsAvgSpend");
+  if (avgEl && (!chart.series || chart.series.length === 0) && totalForSelectedPeriod) {
+    avgEl.textContent = formatMoney(totalForSelectedPeriod);
+  }
+
+  const periodButtons = document.querySelectorAll("[data-period]");
+  periodButtons.forEach(btn => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", async () => {
+      analyticsState.period = btn.dataset.period;
+      await loadAnalytics();
+    });
+  });
+
+  const categorySelect = document.getElementById("analyticsCategorySelect");
+  if (categorySelect && !categorySelect.dataset.bound) {
+    categorySelect.dataset.bound = "1";
+    categorySelect.addEventListener("change", async () => {
+      analyticsState.category = categorySelect.value;
+      await loadAnalytics();
+    });
+  }
 }
 
 async function loadSettings() {
-  const me = await apiGet("/api/auth/me");
+  const [me, analytics, subs] = await Promise.all([
+    apiGet("/api/auth/me"),
+    apiGet("/api/analytics"),
+    apiGet("/api/subscriptions")
+  ]);
   document.getElementById("setEmail").value = me.email || "";
   document.getElementById("setPhone").value = me.phone || "";
+  const profileEmailPreview = document.getElementById("profileEmailPreview");
+  const profileName = document.getElementById("profileName");
+  const profileSubsCount = document.getElementById("profileSubsCount");
+  const profileMonthSpend = document.getElementById("profileMonthSpend");
+  const profileSavings = document.getElementById("profileSavings");
+  if (profileEmailPreview) profileEmailPreview.textContent = me.email || "email не указан";
+  if (profileName) profileName.textContent = me.email ? me.email.split("@")[0] : "Пользователь";
+  if (profileSubsCount) profileSubsCount.textContent = String(subs.length);
+  if (profileMonthSpend) profileMonthSpend.textContent = formatMoney(analytics.totals.month);
+  if (profileSavings) profileSavings.textContent = formatMoney(0);
 
   document.getElementById("saveProfile").addEventListener("click", async () => {
     const email = document.getElementById("setEmail").value.trim();
     const phone = document.getElementById("setPhone").value.trim();
     await apiPatch("/api/auth/me", { email, phone });
+    if (profileEmailPreview) profileEmailPreview.textContent = email || "email не указан";
+    if (profileName) profileName.textContent = email ? email.split("@")[0] : "Пользователь";
     alert("Профиль сохранён");
   });
 
@@ -614,25 +936,51 @@ async function loadSettings() {
     window.location.href = "/login";
   });
 
-  const tabs = document.querySelectorAll(".tab");
-  const panels = document.querySelectorAll(".tab-panel");
-  const setActive = (targetId) => {
-    tabs.forEach(t => t.classList.remove("active"));
-    panels.forEach(p => p.classList.remove("active"));
-    const tab = Array.from(tabs).find(t => t.dataset.target === targetId);
-    if (tab) tab.classList.add("active");
-    const panel = document.getElementById(targetId);
-    if (panel) panel.classList.add("active");
+  const settingsModal = document.getElementById("settingsModal");
+  const settingsBackdrop = document.getElementById("settingsModalBackdrop");
+  const settingsTitle = document.getElementById("settingsModalTitle");
+  const settingsPanels = document.querySelectorAll(".settings-modal-panel");
+  const titleMap = {
+    tabProfile: "Личная информация",
+    tabNotifications: "Уведомления",
+    tabPayment: "Способы оплаты",
+    tabSecurity: "Пароль и безопасность"
   };
 
-  window.openSettingsTab = setActive;
+  const closeSettingsModal = () => {
+    settingsModal.classList.remove("open");
+    settingsBackdrop.classList.remove("open");
+  };
 
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => setActive(tab.dataset.target));
+  const openSettingsModal = (targetId) => {
+    settingsPanels.forEach(panel => panel.classList.toggle("active", panel.id === targetId));
+    if (settingsTitle) settingsTitle.textContent = titleMap[targetId] || "Настройки";
+    settingsModal.classList.add("open");
+    settingsBackdrop.classList.add("open");
+  };
+
+  window.openSettingsTab = openSettingsModal;
+
+  const closeBtn = document.getElementById("closeSettingsModal");
+  if (closeBtn && !closeBtn.dataset.bound) {
+    closeBtn.dataset.bound = "1";
+    closeBtn.addEventListener("click", closeSettingsModal);
+  }
+  if (settingsBackdrop && !settingsBackdrop.dataset.bound) {
+    settingsBackdrop.dataset.bound = "1";
+    settingsBackdrop.addEventListener("click", closeSettingsModal);
+  }
+
+  document.querySelectorAll(".profile-row-button[data-target]").forEach(btn => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      openSettingsModal(btn.dataset.target);
+    });
   });
 
   if (window.location.hash === "#notifications") {
-    setActive("tabNotifications");
+    openSettingsModal("tabNotifications");
   }
 }
 
@@ -736,6 +1084,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (page) {
     // Init modal first so the Add button works even if API calls fail.
     await initModal();
+    ensureNotificationsModal();
     initNotifBadge();
     await updateBadge();
   }

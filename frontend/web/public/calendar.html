@@ -42,8 +42,14 @@
 
       <div class="content">
         <div class="page-title">
-          <h2>Календарь платежей</h2>
-          <p>Отмеченные даты списаний</p>
+          <h2>Календарь</h2>
+          <p>Платежи по месяцам и ближайшие списания</p>
+        </div>
+
+        <div class="card emphasis compact-summary">
+          <h3>Всего в этом месяце</h3>
+          <div class="value" id="calendarSummaryTotal">—</div>
+          <div class="hint" id="calendarSummaryCount">0 платежей</div>
         </div>
 
         <div class="panel">
@@ -54,14 +60,20 @@
               <button class="pill" id="calendarNext">›</button>
             </div>
           </div>
+          <div class="calendar-weekdays">
+            <span>Пн</span>
+            <span>Вт</span>
+            <span>Ср</span>
+            <span>Чт</span>
+            <span>Пт</span>
+            <span>Сб</span>
+            <span>Вс</span>
+          </div>
           <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header">
-            <h4 id="calendarDayLabel">Ближайшие 7 дней</h4>
-            <button class="pill" id="calendarClearDay">Сброс</button>
-          </div>
+        <div class="section-block">
+          <h4 id="calendarDayLabel">Ближайшие 7 дней</h4>
           <div class="list" id="calendarUpcoming"></div>
         </div>
       </div>
