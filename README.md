@@ -144,7 +144,7 @@ docker-compose.yml
 
 ## Переменные окружения
 
-Скопируйте `.env.example` в `.env` и заполните значения:
+Скопируйте `.env` в корень проекта:
 
 ```env
 POSTGRES_USER=postgres
