@@ -49,6 +49,10 @@ def update_subscription(
 
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
+        # Android uses next_billing_date=null to pause a subscription.
+        # Other nullable fields should not overwrite required DB columns with NULL.
+        if value is None and key != "next_billing_date":
+            continue
         setattr(subscription, key, value)
 
     db.commit()
