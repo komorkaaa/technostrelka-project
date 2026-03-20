@@ -29,6 +29,8 @@ const homeState = {
   period: "month"
 };
 
+const CHART_COLORS = ["#8b2cff", "#2563eb", "#16a34a", "#f97316", "#ef4444", "#0ea5e9"];
+
 function requireAuth() {
   const page = document.body.dataset.page;
   const token = localStorage.getItem("token");
@@ -161,6 +163,11 @@ function addYears(date, years) {
   return d;
 }
 
+function shortenLabel(label, max = 10) {
+  const text = String(label || "");
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
 function nextDateFromNow(period) {
   const now = new Date();
   if (period === "weekly") return addDays(now, 7);
@@ -180,21 +187,24 @@ function isPaused(nextDate) {
 
 function svgLineChart(points, width = 520, height = 220, options = {}) {
   if (!points.length) return "";
-  const { showPointLabels = true, showBottomLabels = false } = options;
+  const { showPointLabels = true, showBottomLabels = false, showMinMax = true } = options;
   const max = Math.max(...points.map(p => p.value)) || 1;
   const min = Math.min(...points.map(p => p.value)) || 0;
-  const pad = 28;
+  const padX = 28;
+  const padTop = 28;
+  const padBottom = showBottomLabels ? 46 : 28;
+  const pad = padX;
   const w = width - pad * 2;
-  const h = height - pad * 2;
+  const h = height - padTop - padBottom;
 
   const coords = points.map((p, i) => {
     const x = pad + (w * i) / Math.max(points.length - 1, 1);
-    const y = pad + h - ((p.value - min) / (max - min || 1)) * h;
+    const y = padTop + h - ((p.value - min) / (max - min || 1)) * h;
     return { x, y, label: p.label, value: p.value };
   });
 
   const gridLines = Array.from({ length: 5 }).map((_, i) => {
-    const y = pad + (h * i) / 4;
+    const y = padTop + (h * i) / 4;
     return `<line x1="${pad}" y1="${y}" x2="${pad + w}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 4"/>`;
   });
 
@@ -204,9 +214,11 @@ function svgLineChart(points, width = 520, height = 220, options = {}) {
     return `<text x="${c.x}" y="${y}" text-anchor="middle" font-size="9" fill="#6b7280">${c.label}</text>`;
   }) : [];
 
-  const bottomLabels = showBottomLabels ? coords.map(c => (
-    `<text x="${c.x}" y="${height - 10}" text-anchor="middle" font-size="9" fill="#6b7280">${String(c.label).slice(0, 10)}</text>`
-  )) : [];
+  const labelStep = Math.max(1, Math.ceil(points.length / 6));
+  const bottomLabels = showBottomLabels ? coords.map((c, index) => {
+    if (index % labelStep !== 0 && index !== coords.length - 1) return "";
+    return `<text x="${c.x}" y="${height - 12}" text-anchor="middle" font-size="9" fill="#6b7280">${shortenLabel(c.label, 11)}</text>`;
+  }) : [];
 
   return `
     <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%">
@@ -215,8 +227,8 @@ function svgLineChart(points, width = 520, height = 220, options = {}) {
       ${coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="#8b2cff"/>`).join("")}
       ${pointLabels.join("")}
       ${bottomLabels.join("")}
-      <text x="${width - pad}" y="${pad - 8}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(max)}</text>
-      <text x="${width - pad}" y="${height - 6}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(min)}</text>
+      ${showMinMax ? `<text x="${width - pad}" y="${padTop - 8}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(max)}</text>` : ""}
+      ${showMinMax ? `<text x="${width - pad}" y="${height - 6}" text-anchor="end" font-size="10" fill="#6b7280">${formatMoney(min)}</text>` : ""}
     </svg>
   `;
 }
@@ -259,9 +271,8 @@ function svgDonut(data, width = 240, height = 240, options = {}) {
   const cy = height / 2;
   const r = 90;
   let start = 0;
-  const colors = ["#8b2cff", "#2563eb", "#16a34a", "#f97316", "#ef4444", "#0ea5e9"];
 
-  const shouldShowLabels = showLabels && data.length > 1;
+  const shouldShowLabels = showLabels && data.length > 1 && data.length <= 2;
   const arcs = data.map((d, i) => {
     const angle = (d.value / total) * Math.PI * 2;
     const end = start + angle;
@@ -277,8 +288,8 @@ function svgDonut(data, width = 240, height = 240, options = {}) {
     start = end;
 
     return `
-      <path d="${path}" fill="${colors[i % colors.length]}"></path>
-      ${shouldShowLabels ? `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${d.label}</text>` : ""}
+      <path d="${path}" fill="${CHART_COLORS[i % CHART_COLORS.length]}"></path>
+      ${shouldShowLabels ? `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#6b7280">${shortenLabel(d.label, 12)}</text>` : ""}
     `;
   });
 
@@ -651,6 +662,7 @@ function renderCalendarList(events) {
 function renderCalendar() {
   const monthLabel = document.getElementById("calendarMonth");
   const grid = document.getElementById("calendarGrid");
+  const resetBtn = document.getElementById("calendarReset");
   if (!monthLabel || !grid) return;
 
   const base = calendarState.date || new Date();
@@ -660,6 +672,9 @@ function renderCalendar() {
   const lastDay = new Date(year, month + 1, 0);
 
   monthLabel.textContent = firstDay.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+  if (resetBtn) {
+    resetBtn.hidden = false;
+  }
 
   const events = [];
   calendarState.subs.forEach(sub => {
@@ -724,10 +739,12 @@ async function loadCalendar() {
 
   const prevBtn = document.getElementById("calendarPrev");
   const nextBtn = document.getElementById("calendarNext");
+  const resetBtn = document.getElementById("calendarReset");
   if (prevBtn && !prevBtn.dataset.bound) {
     prevBtn.dataset.bound = "1";
     prevBtn.addEventListener("click", () => {
       calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() - 1, 1);
+      calendarState.selectedDate = null;
       renderCalendarSummary(calendarState.subs);
       renderCalendar();
     });
@@ -736,6 +753,17 @@ async function loadCalendar() {
     nextBtn.dataset.bound = "1";
     nextBtn.addEventListener("click", () => {
       calendarState.date = new Date(calendarState.date.getFullYear(), calendarState.date.getMonth() + 1, 1);
+      calendarState.selectedDate = null;
+      renderCalendarSummary(calendarState.subs);
+      renderCalendar();
+    });
+  }
+  if (resetBtn && !resetBtn.dataset.bound) {
+    resetBtn.dataset.bound = "1";
+    resetBtn.addEventListener("click", () => {
+      const today = new Date();
+      calendarState.date = new Date(today.getFullYear(), today.getMonth(), 1);
+      calendarState.selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       renderCalendarSummary(calendarState.subs);
       renderCalendar();
     });
@@ -795,6 +823,7 @@ function updateAnalyticsCards(series) {
 
   avgEl.textContent = formatMoney(avg);
   trendEl.textContent = `${trend >= 0 ? "+" : ""}${trend.toFixed(1)}%`;
+  trendEl.style.color = trend < 0 ? "var(--green)" : trend > 0 ? "var(--orange)" : "inherit";
   savingsEl.textContent = formatMoney(savings);
   efficiencyEl.textContent = `${Math.round(efficiency)}%`;
   minEl.textContent = formatMoney(min);
@@ -840,6 +869,7 @@ async function loadAnalytics() {
   const byCategory = Object.entries(analytics.by_category || {}).map(([k, v]) => ({ label: k, value: Number(v) }));
   const byService = Object.fromEntries(Object.entries(analytics.by_service || {}).map(([k, v]) => [k, Number(v)]));
   const totalForSelectedPeriod = getSelectedAnalyticsTotal(chart.totals || analytics.totals);
+  const categoryTotal = byCategory.reduce((sum, item) => sum + item.value, 0);
 
   fillAnalyticsCategorySelect(analytics.by_category);
   updateAnalyticsTabs();
@@ -847,15 +877,25 @@ async function loadAnalytics() {
   document.getElementById("trendChart").innerHTML = svgLineChart(
     chart.series.map(p => ({ label: p.label, value: Number(p.value) })),
     520,
-    220,
-    { showPointLabels: false, showBottomLabels: true }
+    248,
+    { showPointLabels: false, showBottomLabels: true, showMinMax: false }
   );
   updateAnalyticsCards(chart.series || []);
   renderAnalyticsRecommendations(byService);
 
   const catLegend = document.getElementById("categoryLegend");
   catLegend.innerHTML = byCategory
-    .map(c => `<div>${c.label}: ${formatMoney(c.value)}</div>`)
+    .map((c, index) => {
+      const share = categoryTotal > 0 ? Math.round((c.value / categoryTotal) * 100) : 0;
+      return `
+        <div class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:${CHART_COLORS[index % CHART_COLORS.length]}"></span>
+          <span class="chart-legend-label">${c.label}</span>
+          <strong>${formatMoney(c.value)}</strong>
+          <span class="chart-legend-share">${share}%</span>
+        </div>
+      `;
+    })
     .join("");
 
   const avgEl = document.getElementById("analyticsAvgSpend");

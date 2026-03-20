@@ -44,7 +44,8 @@ textarea {
 .app {
   display: grid;
   grid-template-columns: 272px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -54,6 +55,8 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .brand { display: grid; gap: 6px; }
@@ -135,6 +138,8 @@ textarea {
   display: grid;
   grid-template-rows: auto 1fr;
   min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .topbar {
@@ -528,7 +533,8 @@ textarea {
   width: 100%;
   min-height: 200px;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(139, 44, 255, 0.12), rgba(139, 44, 255, 0));
+  background: #ffffff;
+  border: 1px solid var(--line);
   display: grid;
   place-items: center;
   color: var(--muted);
@@ -1028,7 +1034,35 @@ textarea {
 }
 
 .analytics-categories-panel .chart-legend {
+  display: grid;
   gap: 8px;
+}
+
+.chart-legend-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.chart-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.chart-legend-label {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.chart-legend-share {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .compact-chart-card {
@@ -1298,6 +1332,8 @@ textarea {
 }
 
 #trendChart svg {
+  display: block;
+  overflow: visible;
   max-height: 220px;
 }
 
@@ -1305,6 +1341,19 @@ body[data-page="analytics"] .panel,
 body[data-page="analytics"] .analytics-controls {
   width: min(100%, 1040px);
   justify-self: start;
+}
+
+body[data-page="analytics"] {
+  background: #f6f7fb;
+}
+
+body[data-page="analytics"] .main,
+body[data-page="analytics"] .content {
+  background: #f6f7fb;
+}
+
+body[data-page="analytics"] .topbar {
+  border-bottom: none;
 }
 
 body[data-page="analytics"] .chart-card,
@@ -1318,6 +1367,10 @@ body[data-page="analytics"] .analytics-categories-panel {
 
 body[data-page="analytics"] #categoryLegend {
   max-width: 420px;
+}
+
+body[data-page="analytics"] #categoryLegend:empty {
+  display: none;
 }
 
 #logoutBtn {
@@ -1341,6 +1394,8 @@ body[data-page="analytics"] #categoryLegend {
 @media (max-width: 920px) {
   .app {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .sidebar {
@@ -1351,6 +1406,13 @@ body[data-page="analytics"] #categoryLegend {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .main {
+    height: auto;
+    overflow: visible;
   }
 
   .nav {
@@ -1418,6 +1480,15 @@ body[data-page="analytics"] #categoryLegend {
   .calendar-day {
     min-height: 64px;
     padding: 6px;
+  }
+
+  .chart-legend-item {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .chart-legend-share {
+    grid-column: 2 / 4;
+    justify-self: end;
   }
 
   .analytics-stats-grid {
